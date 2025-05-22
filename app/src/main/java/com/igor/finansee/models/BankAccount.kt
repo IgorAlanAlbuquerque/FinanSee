@@ -1,12 +1,37 @@
 package com.igor.finansee.models
 
 data class BankAccount(
-    val id: String, // ID único para a conta (UUID)
-    val userId: String, // ID do usuário ao qual esta conta pertence
+    val id: Int,
+    val userId: Int,
     val name: String,
-    val type: String, // Ex: "Checking Account", "Savings Account", "Cash", "Investment"
-    val initialBalance: Double, // Saldo inicial ao cadastrar a conta
-    val currentBalance: Double, // Saldo atual da conta, atualizado por transações
-    val isDefault: Boolean, // Se é a conta padrão para novas transações
-    val isActive: Boolean = true // Indica se a conta está ativa ou arquivada
+    val type: String,
+    val currentBalance: Double,
+    val isActive: Boolean = true
+)
+
+val bankAccountList = listOf(
+    BankAccount(
+        id = 1,
+        userId = 1,
+        name = "Conta Corrente Principal",
+        type = "Corrente",
+        currentBalance = 1500.50,
+        isActive = true
+    ),
+    BankAccount(
+        id = 2,
+        userId = 1,
+        name = "Poupança Investimentos",
+        type = "Poupança",
+        currentBalance = 5000.00,
+        isActive = true
+    ),
+    BankAccount(
+        id = 3,
+        userId = 1,
+        name = "Conta Despesas Mensais",
+        type = "Corrente",
+        currentBalance = 320.80,
+        isActive = true
+    )
 )

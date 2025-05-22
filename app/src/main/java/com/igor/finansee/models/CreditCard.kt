@@ -1,12 +1,35 @@
 package com.igor.finansee.models
 
 data class CreditCard(
-    val id: String, // ID único para o cartão
-    val userId: String, // ID do usuário ao qual este cartão pertence
+    val id: Int,
+    val userId: Int,
     val bankName: String,
-    val lastFourDigits: String, // Últimos 4 dígitos para identificação (NUNCA o número completo!)
+    val lastFourDigits: String,
     val creditLimit: Double,
-    val statementClosingDay: Int, // Dia do mês em que a fatura fecha (ex: 25)
-    val dueDate: Int, // Dia do mês em que a fatura vence (ex: 5)
-    val isActive: Boolean = true // Indica se o cartão está ativo
+    val statementClosingDay: Int,
+    val dueDate: Int,
+    val isActive: Boolean = true
+)
+
+val creditCardList = listOf(
+    CreditCard(
+        id = 1,
+        userId = 1,
+        bankName = "Banco X",
+        lastFourDigits = "1234",
+        creditLimit = 2500.00,
+        statementClosingDay = 25,
+        dueDate = 5,
+        isActive = true
+    ),
+    CreditCard(
+        id = 2,
+        userId = 1,
+        bankName = "FinanSee Card",
+        lastFourDigits = "5678",
+        creditLimit = 5000.00,
+        statementClosingDay = 10,
+        dueDate = 20,
+        isActive = true
+    )
 )

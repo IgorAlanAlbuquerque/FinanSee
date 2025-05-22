@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -26,6 +25,7 @@ import com.igor.finansee.ui.screens.ProfileScreen
 import com.igor.finansee.ui.screens.TransactionScreen
 import com.igor.finansee.ui.theme.FinanSeeTheme
 import kotlinx.coroutines.launch
+import com.igor.finansee.models.userList
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,6 +35,8 @@ class MainActivity : ComponentActivity() {
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val scope = rememberCoroutineScope()
             val isDarkTheme = remember { mutableStateOf(false) }
+
+            val currentUser = userList.first()
 
             FinanSeeTheme (darkTheme = isDarkTheme.value) {
                 ModalNavigationDrawer(
@@ -58,12 +60,7 @@ class MainActivity : ComponentActivity() {
                                 startDestination = "home",
                                 modifier = Modifier.padding(innerPadding)
                             ) {
-                                composable("home") {
-                                    HomeScreen(
-                                        navController,
-                                        context = LocalContext.current
-                                    )
-                                }
+                                composable("home") { HomeScreen(navController, currentUser) }
                                 composable("profile") { ProfileScreen(navController) }
                                 composable("add") { AddScreen(navController) }
                                 composable("plans") { PlansScreen(navController) }

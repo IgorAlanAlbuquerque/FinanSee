@@ -1,39 +1,105 @@
 package com.igor.finansee.models
 
-import java.util.UUID // Para gerar IDs únicos
+import java.time.LocalDate
 
 data class Transaction(
-    val id: String = UUID.randomUUID().toString(), // ID único para a transação
-    val userId: String, // ID do usuário que registrou a transação
+    val id: Int,
+    val userId: Int,
 
-    val value: Double, // Valor da transação (sempre positivo, o tipo define se é entrada/saída)
-    val description: String, // Descrição da transação (ex: "Almoço", "Salário", "Transferência para poupança")
-    val date: Long, // Timestamp da data da transação em milissegundos (para facilitar ordenação e filtros)
+    val value: Double,
+    val description: String,
+    val date: LocalDate,
 
-    val type: TransactionType, // Enum para o tipo de transação (Receita, Despesa, Transferencia)
+    val type: TransactionType,
 
-    // OBRIGATÓRIOS para a maioria das transações
-    val accountId: String, // ID da conta de origem (para despesa/transferência) ou destino (para receita/transferência)
-
-    // OPCIONAIS dependendo do tipo da transação
-    val destinationAccountId: String?, // ID da conta de destino (somente para transferências)
-    val creditCardId: String?, // ID do cartão de crédito (somente para despesas de cartão)
-    val categoryId: String?, // ID da categoria (para receitas/despesas)
-    val subcategoryId: String?, // ID da subcategoria (para receitas/despesas)
-
-    // Para controle de status e recorrência
-    val isPaid: Boolean = true, // Indica se a transação já foi efetivada (true) ou está pendente (false - contas a pagar/receber)
-    val isRecurring: Boolean = false, // Indica se a transação é parte de uma série recorrente
-    val isInstallment: Boolean = false, // Indica se a transação é parcelada
-    val currentInstallment: Int = 1, // Número da parcela atual (ex: 1 de 3)
-    val totalInstallments: Int = 1, // Número total de parcelas (ex: 3)
-    val originalTransactionId: String? // ID da transação "mãe" para agrupar parcelas ou recorrências
 )
 
-// Enum para os tipos de transação, melhor do que String para tipagem segura
 enum class TransactionType {
-    INCOME,        // Receita
-    EXPENSE,       // Despesa
-    TRANSFER,      // Transferência entre contas
-    CREDIT_CARD_EXPENSE // Despesa no cartão de crédito
+    INCOME,
+    EXPENSE,
+    TRANSFER,
+    CREDIT_CARD_EXPENSE
 }
+
+val transactionList = listOf(
+    Transaction(
+        id = 1,
+        userId = 1,
+        value = 3500.00,
+        description = "Salário - Janeiro",
+        date = LocalDate.of(2025, 1, 31),
+        type = TransactionType.INCOME
+    ),
+    Transaction(
+        id = 2,
+        userId = 1,
+        value = 1200.00,
+        description = "Aluguel",
+        date = LocalDate.of(2025, 1, 5),
+        type = TransactionType.EXPENSE
+    ),
+    Transaction(
+        id = 3,
+        userId = 1,
+        value = 250.75,
+        description = "Supermercado - Cartão",
+        date = LocalDate.of(2025, 1, 10),
+        type = TransactionType.CREDIT_CARD_EXPENSE
+    ),
+    Transaction(
+        id = 4,
+        userId = 1,
+        value = 800.00,
+        description = "Freelance - Projeto X",
+        date = LocalDate.of(2025, 1, 15),
+        type = TransactionType.INCOME
+    ),
+    Transaction(
+        id = 5,
+        userId = 1,
+        value = 99.90,
+        description = "Conta de Internet",
+        date = LocalDate.of(2025, 1, 20),
+        type = TransactionType.EXPENSE
+    ),
+    Transaction(
+        id = 6,
+        userId = 1,
+        value = 500.00,
+        description = "Transferência para Poupança",
+        date = LocalDate.of(2025, 2, 1),
+        type = TransactionType.TRANSFER
+    ),
+    Transaction(
+        id = 7,
+        userId = 1,
+        value = 85.50,
+        description = "Jantar com amigos",
+        date = LocalDate.of(2025, 2, 10),
+        type = TransactionType.CREDIT_CARD_EXPENSE
+    ),
+    Transaction(
+        id = 8,
+        userId = 1,
+        value = 60.00,
+        description = "Recarga Bilhete Único",
+        date = LocalDate.of(2025, 2, 3),
+        type = TransactionType.EXPENSE
+    ),
+    Transaction(
+        id = 9,
+        userId = 1,
+        value = 150.00,
+        description = "Reembolso Despesas Viagem",
+        date = LocalDate.of(2025, 2, 25),
+        type = TransactionType.INCOME
+    ),
+    Transaction(
+        id = 10,
+        userId = 1,
+        value = 320.00,
+        description = "Compra Online - Roupa",
+        date = LocalDate.of(2025, 2, 20),
+        type = TransactionType.CREDIT_CARD_EXPENSE
+    )
+)

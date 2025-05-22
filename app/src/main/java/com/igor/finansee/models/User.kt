@@ -1,8 +1,21 @@
 package com.igor.finansee.models
 
+import java.time.LocalDate
+
 data class User(
-    val id: String, // Um ID único para o usuário (ex: UUID ou ID de um sistema de autenticação)
+    val id: Int,
     val email: String,
-    val name: String?, // Nome do usuário, pode ser opcional
-    val registrationDate: Long // Timestamp da data de cadastro em milissegundos
+    val name: String,
+    val registrationDate: LocalDate,
+    val password: String
+)
+
+val userList = listOf(
+    User(
+        id = 1,
+        email = "igoralbuquerque102@hotmail.com",
+        name = "Igor Alan Albuquerque de Sousa",
+        registrationDate = LocalDate.of(2023, 1, 15),
+        password = "123"
+    )
 )
