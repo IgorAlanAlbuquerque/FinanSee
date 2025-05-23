@@ -5,8 +5,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +28,26 @@ import com.igor.finansee.ui.screens.TransactionScreen
 import com.igor.finansee.ui.theme.FinanSeeTheme
 import kotlinx.coroutines.launch
 import com.igor.finansee.models.userList
+import androidx.activity.compose.setContent
+import androidx.navigation.compose.rememberNavController
+import com.igor.finansee.navigation.NavAuth
+
+/*class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            // Cria o NavController
+            val navController = rememberNavController()
+
+            // Surface é só pra ter background correto
+            Surface(color = MaterialTheme.colorScheme.background) {
+                // Chama seu NavGraph passando o navController
+                NavAuth(navController = navController)
+            }
+        }
+    }
+}*/
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
