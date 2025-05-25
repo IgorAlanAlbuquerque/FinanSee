@@ -4,17 +4,34 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.automirrored.outlined.TrendingDown
 import androidx.compose.material.icons.automirrored.outlined.TrendingUp
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Flight
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocalHospital
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.AttachMoney
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.Button
@@ -25,6 +42,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +66,7 @@ import com.igor.finansee.models.BankAccount
 import com.igor.finansee.models.Category
 import com.igor.finansee.models.CreditCard
 import com.igor.finansee.models.FaturaCreditCard
+import com.igor.finansee.models.MonthPlanning
 import com.igor.finansee.models.TransactionType
 import com.igor.finansee.models.User
 import com.igor.finansee.models.creditCardList
@@ -55,6 +74,7 @@ import com.igor.finansee.models.bankAccountList
 import com.igor.finansee.models.categoryList
 import com.igor.finansee.models.transactionList
 import com.igor.finansee.models.faturaCreditCardList
+import com.igor.finansee.models.mockMonthPlanningList
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -77,6 +97,13 @@ val pieChartColors = listOf(
     Color(0xFF795548), // Brown
     Color(0xFF607D8B)  // Blue Grey
 )
+val CardBackgroundColor = Color(0xFF2C2C2E)
+val TextColorPrimary = Color.White
+val TextColorSecondary = Color(0xFFAAAAAA)
+val ProgressBarExceededColor = Color(0xFFE74C3C)
+val ProgressBarNormalColor = Color(0xFF4A90E2)
+val IconBackgroundBlue = Color(0xFF4A90E2)
+val IconBackgroundRed = Color(0xFFE74C3C)
 
 data class CategoryWithAmount(
     val category: Category,
@@ -221,7 +248,14 @@ fun HomeScreen (navController: NavHostController, currentUser: User) {
             ExpensesByCategory(transAgrByCategory)
         }
         item {
-            MonthPlan()
+            MonthPlan(
+                selectedDate = selectedDate,
+                currentUser = currentUser,
+                actualTotalExpenses = expensesForSelectedMonth,
+                actualExpensesByCategory = transAgrByCategory,
+                allCategories = categoryList, // Passe a lista de todas as categorias
+                planningList = mockMonthPlanningList // Passe a lista de planejamentos
+            )
         }
     }
 }
@@ -890,5 +924,240 @@ fun ExpensesByCategory(transactionsByCategory: List<CategoryWithAmount>) {
 }
 
 @Composable
-fun MonthPlan() {
+fun MonthPlan(
+    selectedDate: LocalDate,
+    currentUser: User,
+    actualTotalExpenses: Double,
+    actualExpensesByCategory: List<CategoryWithAmount>,
+    allCategories: List<Category>,
+    planningList: List<MonthPlanning>
+) {
+    val currentPlanning = remember(planningList, selectedDate, currentUser.id) {
+        planningList.find {
+            it.userId == currentUser.id &&
+                    it.monthYear.year == selectedDate.year &&
+                    it.monthYear.month == selectedDate.month
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Planejamento mensal",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextColorPrimary,
+            modifier = Modifier.padding(start = 4.dp, bottom = 16.dp, top = 8.dp)
+        )
+
+        if (currentPlanning == null) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = CardBackgroundColor)
+            ) {
+                Text(
+                    "Nenhum planejamento encontrado para este mês.",
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    color = TextColorSecondary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                // TODO: Adicionar um botão para "Criar Planejamento" se desejar
+            }
+        } else {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(horizontal = 4.dp) // Para não colar nas bordas
+            ) {
+                // Card: Planejamento Total
+                val totalPlannedTargetAmount = currentPlanning.totalMonthlyIncome * (currentPlanning.targetSpendingPercentage / 100.0)
+                item {
+                    PlanningCard(
+                        icon = Icons.Filled.AccountBalanceWallet,
+                        title = "Planejamento total",
+                        actualSpent = actualTotalExpenses, // Este é o total de despesas do mês
+                        plannedAmount = totalPlannedTargetAmount,
+                        iconBackgroundColor = IconBackgroundBlue,
+                        onClick = { /* TODO: Navegar para detalhes do planejamento total */ }
+                    )
+                }
+
+                // Cards: Categorias Planejadas
+                items(currentPlanning.categorySpendingPlan) { plannedCategory ->
+                    val category = allCategories.find { it.id == plannedCategory.categoryId }
+                    val actualSpentForCategory = actualExpensesByCategory
+                        .find { it.category.id == plannedCategory.categoryId }?.totalAmount ?: 0.0
+
+                    if (category != null) {
+                        PlanningCard(
+                            icon = getIconForCategory(category.id),
+                            title = category.name,
+                            actualSpent = actualSpentForCategory,
+                            plannedAmount = plannedCategory.plannedAmount,
+                            iconBackgroundColor = getIconBgColorForCategory(category.id, actualSpentForCategory > plannedCategory.plannedAmount),
+                            onClick = { /* TODO: Navegar para detalhes desta categoria no planejamento */ }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun getIconForCategory(categoryId: Int): ImageVector {
+    return when (categoryId) {
+        // IDs da sua categoryList
+        6 -> Icons.Filled.Restaurant // Alimentação
+        7 -> Icons.Filled.Home // Moradia
+        8 -> Icons.Filled.DirectionsCar // Transporte
+        9 -> Icons.Filled.School // Educação
+        10 -> Icons.Filled.LocalHospital // Saúde
+        11 -> Icons.Filled.Celebration // Lazer
+        12 -> Icons.Filled.ShoppingCart // Compras
+        13 -> Icons.AutoMirrored.Filled.ReceiptLong // Contas de Consumo
+        14 -> Icons.Outlined.AttachMoney // Assinaturas (Ícone de dinheiro como no exemplo)
+        15 -> Icons.Filled.Flight // Viagem
+        16 -> Icons.Filled.AccountBalance // Impostos (Exemplo)
+        17 -> Icons.Filled.MoreHoriz // Outras Despesas
+        else -> Icons.Filled.Category // Ícone padrão
+    }
+}
+
+fun getIconBgColorForCategory(categoryId: Int, isExceeded: Boolean): Color {
+    if (isExceeded) return IconBackgroundRed // Se excedeu, pode ser vermelho
+    return when (categoryId) {
+        6 -> IconBackgroundRed // Alimentação (geralmente vermelho no exemplo)
+        14 -> IconBackgroundBlue // Assinaturas (azul no exemplo)
+        // Adicione mais cores específicas baseadas nos seus designs
+        else -> IconBackgroundBlue.copy(alpha = 0.7f) // Um azul padrão para outros
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PlanningCard(
+    icon: ImageVector,
+    title: String,
+    actualSpent: Double,
+    plannedAmount: Double,
+    iconBackgroundColor: Color,
+    onClick: () -> Unit
+) {
+    val percentage = if (plannedAmount > 0.005) (actualSpent / plannedAmount) * 100 else if (actualSpent > 0) 200.0 else 0.0
+    // Usar 0.005 para evitar divisão por zero ou valores muito pequenos de plannedAmount
+    // Coerce progress para o LinearProgressIndicator (0f a 1f)
+    // Para o texto, o percentage pode ser > 100%
+    val visualProgress = if (plannedAmount > 0.005) (actualSpent / plannedAmount).toFloat() else if (actualSpent > 0) 1f else 0f
+
+    val difference = actualSpent - plannedAmount
+    val statusText: String
+    val statusTextColor: Color
+
+    if (difference > 0.005) { // Excedeu (considerando uma pequena margem para igualdade de float)
+        statusText = "Excedeu R$${"%.2f".format(difference)}"
+        statusTextColor = ProgressBarExceededColor
+    } else { // Resta ou está em dia
+        statusText = "Restam R$${"%.2f".format(-difference)}" // -difference será o valor restante
+        statusTextColor = TextColorSecondary // Cinza claro para "Restam"
+    }
+
+    val progressBarColor = if (difference > 0.005) ProgressBarExceededColor else ProgressBarNormalColor
+
+    Card(
+        modifier = Modifier
+            .width(260.dp) // Largura do card
+            .height(IntrinsicSize.Min), // Ajusta a altura ao conteúdo
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBackgroundColor),
+        onClick = onClick,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp) // Tamanho do círculo do ícone
+                        .clip(CircleShape)
+                        .background(iconBackgroundColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = title,
+                        tint = TextColorPrimary,
+                        modifier = Modifier.size(20.dp) // Tamanho do ícone
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        title,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextColorPrimary,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                    Text(
+                        statusText,
+                        fontSize = 12.sp,
+                        color = statusTextColor
+                    )
+                }
+                Icon(
+                    Icons.Filled.ChevronRight,
+                    contentDescription = "Detalhes",
+                    tint = TextColorSecondary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(18.dp)) // Aumentar espaço antes da barra
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                LinearProgressIndicator(
+                    progress = { visualProgress.coerceIn(0f, 1f) }, // Progresso visual limitado a 100% na barra
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(10.dp) // Barra mais grossa
+                        .clip(RoundedCornerShape(5.dp)),
+                    color = progressBarColor,
+                    trackColor = Color.DarkGray.copy(alpha = 0.4f)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    "${"%.0f".format(percentage)}%", // Porcentagem sem casas decimais como nos exemplos
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (difference > 0.005) ProgressBarExceededColor else TextColorPrimary
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                "R$${"%.2f".format(actualSpent)} de R$${"%.2f".format(plannedAmount)}",
+                fontSize = 12.sp,
+                color = TextColorSecondary
+            )
+
+            if (difference > 0.005 && plannedAmount > 0.005) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    // Texto como no exemplo: "366,30% Despesas previstas excedentes"
+                    // Usando a porcentagem calculada e formatada:
+                    "${"%.2f".format(percentage)}% Despesas previstas excedentes",
+                    fontSize = 11.sp,
+                    color = ProgressBarExceededColor,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+            }
+        }
+    }
 }
