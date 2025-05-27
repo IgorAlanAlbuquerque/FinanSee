@@ -1,6 +1,6 @@
 package com.igor.finansee.models
 
-import android.R
+import com.igor.finansee.R
 import java.time.LocalDate
 
 data class User(
@@ -21,6 +21,6 @@ val userList = listOf(
         registrationDate = LocalDate.of(2023, 1, 15),
         password = "123",
         statusPremium = false,
-        //fotoPerfil = R.drawable.perfil
+        fotoPerfil = R.drawable.perfil
     )
 )
