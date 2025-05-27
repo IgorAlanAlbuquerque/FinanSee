@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
                                 composable("profile") { ProfileScreen(navController, currentUser) }
                                 composable("add") { AddScreen(navController) }
                                 composable("plans") { PlansScreen(navController) }
-                                composable("transactions") { TransactionScreen(navController) }
+                                composable("transactions") { TransactionScreen(navController, currentUser) }
                             }
                         }
                     }

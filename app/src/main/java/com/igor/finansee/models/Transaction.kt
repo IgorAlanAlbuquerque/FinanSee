@@ -15,7 +15,8 @@ data class Transaction(
 enum class TransactionType {
     INCOME,
     EXPENSE,
-    TRANSFER,
+    TRANSFER_IN,
+    TRANSFER_OUT,
     CREDIT_CARD_EXPENSE
 }
 
@@ -72,7 +73,7 @@ val transactionList = listOf(
         value = 500.00,
         description = "Transferência para Poupança",
         date = LocalDate.of(2025, 2, 1),
-        type = TransactionType.TRANSFER
+        type = TransactionType.TRANSFER_OUT
     ),
     Transaction(
         id = 7,
@@ -109,5 +110,14 @@ val transactionList = listOf(
         description = "Compra Online - Roupa",
         date = LocalDate.of(2025, 2, 20),
         type = TransactionType.CREDIT_CARD_EXPENSE
+    ),
+    Transaction(
+        id = 11,
+        userId = 1,
+        categoryId = 3,
+        value = 200.00,
+        description = "recebimento",
+        date = LocalDate.of(2025, 3, 20),
+        type = TransactionType.TRANSFER_IN
     )
 )
