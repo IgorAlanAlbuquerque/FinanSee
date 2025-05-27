@@ -75,15 +75,14 @@ import com.igor.finansee.models.categoryList
 import com.igor.finansee.models.transactionList
 import com.igor.finansee.models.faturaCreditCardList
 import com.igor.finansee.models.mockMonthPlanningList
+import com.igor.finansee.ui.theme.BackgroundGray
+import com.igor.finansee.ui.theme.GreenSuccess
+import com.igor.finansee.ui.theme.LightPurple
+import com.igor.finansee.ui.theme.RedExpense
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
-
-val LightPurple = Color(0xFF9C27B0)
-val BackgroundGray = Color(0xFFF0F0F0)
-val GreenSuccess = Color(0xFF4CAF50)
-val RedExpense = Color(0xFFF44336)
 
 val pieChartColors = listOf(
     Color(0xFFE91E63), // Pink
@@ -616,14 +615,8 @@ fun CreditCardSection(
                                         fontSize = 16.sp,
                                         color = Color.Black
                                     )
-                                    // You could add last 4 digits of card here if available in CreditCard model
-                                    // Text(text = "**** ${creditCard.lastFourDigits}", fontSize = 12.sp, color = Color.Gray)
                                 }
                             }
-                            // Optional: Add an icon button for more options per card
-                            // IconButton(onClick = { /* TODO: More options for this card */ }) {
-                            //    Icon(Icons.Default.MoreVert, contentDescription = "Mais opções")
-                            // }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -965,7 +958,6 @@ fun MonthPlan(
                     color = TextColorSecondary,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
-                // TODO: Adicionar um botão para "Criar Planejamento" se desejar
             }
         } else {
             LazyRow(
@@ -980,8 +972,7 @@ fun MonthPlan(
                         title = "Planejamento total",
                         actualSpent = actualTotalExpenses, // Este é o total de despesas do mês
                         plannedAmount = totalPlannedTargetAmount,
-                        iconBackgroundColor = IconBackgroundBlue,
-                        onClick = { /* TODO: Navegar para detalhes do planejamento total */ }
+                        iconBackgroundColor = IconBackgroundBlue
                     )
                 }
 
@@ -997,8 +988,7 @@ fun MonthPlan(
                             title = category.name,
                             actualSpent = actualSpentForCategory,
                             plannedAmount = plannedCategory.plannedAmount,
-                            iconBackgroundColor = getIconBgColorForCategory(category.id, actualSpentForCategory > plannedCategory.plannedAmount),
-                            onClick = { /* TODO: Navegar para detalhes desta categoria no planejamento */ }
+                            iconBackgroundColor = getIconBgColorForCategory(category.id, actualSpentForCategory > plannedCategory.plannedAmount)
                         )
                     }
                 }
@@ -1043,8 +1033,7 @@ fun PlanningCard(
     title: String,
     actualSpent: Double,
     plannedAmount: Double,
-    iconBackgroundColor: Color,
-    onClick: () -> Unit
+    iconBackgroundColor: Color
 ) {
     val percentage = if (plannedAmount > 0.005) (actualSpent / plannedAmount) * 100 else if (actualSpent > 0) 200.0 else 0.0
     // Usar 0.005 para evitar divisão por zero ou valores muito pequenos de plannedAmount
@@ -1072,7 +1061,6 @@ fun PlanningCard(
             .height(IntrinsicSize.Min), // Ajusta a altura ao conteúdo
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CardBackgroundColor),
-        onClick = onClick,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

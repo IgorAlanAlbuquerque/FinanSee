@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding)
                             ) {
                                 composable("home") { HomeScreen(navController, currentUser) }
-                                composable("profile") { ProfileScreen(navController) }
+                                composable("profile") { ProfileScreen(navController, currentUser) }
                                 composable("add") { AddScreen(navController) }
                                 composable("plans") { PlansScreen(navController) }
                                 composable("transactions") { TransactionScreen(navController) }
