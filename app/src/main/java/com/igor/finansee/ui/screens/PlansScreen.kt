@@ -19,20 +19,20 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.igor.finansee.models.MonthPlanning
-import com.igor.finansee.models.mockMonthPlanningList
 import com.igor.finansee.ui.theme.BackgroundGray
-import java.time.LocalDate
-import java.time.format.TextStyle
-import java.util.*
+import com.igor.finansee.viewmodels.PlansScreenViewModel
 
 @Composable
-fun PlansScreen(navController: NavHostController) {
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+fun PlansScreen(
+    navController: NavHostController,
+    viewModel: PlansScreenViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
 
-    val currentPlanning: MonthPlanning? = mockMonthPlanningList.find {
-        it.monthYear.month == selectedDate.month && it.monthYear.year == selectedDate.year
+    LaunchedEffect(Unit) {
+        viewModel.loadInitialData()
     }
 
     Box(
@@ -45,7 +45,6 @@ fun PlansScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Título
             Text(
                 text = "Planejamento Financeiro",
                 fontSize = 24.sp,
@@ -54,7 +53,6 @@ fun PlansScreen(navController: NavHostController) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // Seletor de mês
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -62,41 +60,22 @@ fun PlansScreen(navController: NavHostController) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = {
-                    selectedDate = selectedDate.minusMonths(1)
-                }) {
-                    Icon(
-                        imageVector = Icons.Filled.ChevronLeft,
-                        contentDescription = "Mês anterior",
-                        tint = Color.Black
-                    )
+                IconButton(onClick = { viewModel.selectPreviousMonth() }) {
+                    Icon(Icons.Filled.ChevronLeft, "Mês anterior", tint = Color.Black)
                 }
 
                 Text(
-                    text = selectedDate.month.getDisplayName(TextStyle.FULL, Locale("pt", "BR"))
-                        .replaceFirstChar {
-                            if (it.isLowerCase()) it.titlecase(
-                                Locale(
-                                    "pt", "BR"
-                                )
-                            ) else it.toString()
-                        } + " " + selectedDate.year,
+                    text = uiState.monthDisplayName,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.Black)
+                    color = Color.Black
+                )
 
-                IconButton(onClick = {
-                    selectedDate = selectedDate.plusMonths(1)
-                }) {
-                    Icon(
-                        imageVector = Icons.Filled.ChevronRight,
-                        contentDescription = "Próximo mês",
-                        tint = Color.Black
-                    )
+                IconButton(onClick = { viewModel.selectNextMonth() }) {
+                    Icon(Icons.Filled.ChevronRight, "Próximo mês", tint = Color.Black)
                 }
             }
 
-            // Conteúdo principal
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
@@ -110,12 +89,9 @@ fun PlansScreen(navController: NavHostController) {
                         .fillMaxSize()
                         .padding(16.dp)
                 ) {
-                    if (currentPlanning != null) {
-                        val totalPlanejado =
-                            currentPlanning.categorySpendingPlan.sumOf { it.plannedAmount }
-
+                    if (uiState.currentPlanning != null) {
                         Text(
-                            text = "Valor total a ser gasto no mês: R$ %.2f".format(totalPlanejado),
+                            text = "Valor total a ser gasto no mês: R$ %.2f".format(uiState.totalPlannedAmount),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.Black,
@@ -123,34 +99,25 @@ fun PlansScreen(navController: NavHostController) {
                         )
 
                         LazyColumn {
-                            items(currentPlanning.categorySpendingPlan) { item ->
+                            items(uiState.planDetailsWithProgress) { item ->
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 8.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = Color(
-                                            0xFFF5F5F5
-                                        )
-                                    ),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
                                     elevation = CardDefaults.cardElevation(2.dp)
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(bottom = 8.dp),
+                                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
-                                            Text(text = "Categoria ${item.categoryId}")
+                                            Text(text = item.categoryName)
                                             Text(text = "R$ %.2f".format(item.plannedAmount))
                                         }
 
-                                        // Barra de progresso (atualmente só exemplo, valor fixo de 10)
-                                        val gastoAtual = 10.0
-                                        val progresso = (gastoAtual / item.plannedAmount).coerceIn(0.0, 1.0).toFloat()
                                         LinearProgressIndicator(
-                                            progress = { progresso }, // lambda que retorna o progresso
+                                            progress = { item.progress },
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .height(6.dp)
@@ -162,7 +129,7 @@ fun PlansScreen(navController: NavHostController) {
 
                                         Text(
                                             text = "Gasto: R$ %.2f / R$ %.2f".format(
-                                                gastoAtual, item.plannedAmount
+                                                item.actualAmount, item.plannedAmount
                                             ),
                                             fontSize = 12.sp,
                                             color = Color.Gray,
@@ -173,11 +140,13 @@ fun PlansScreen(navController: NavHostController) {
                             }
                         }
                     } else {
-                        Text(
-                            text = "Nenhum planejamento encontrado para este mês.",
-                            fontSize = 16.sp,
-                            color = Color.Gray
-                        )
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()){
+                            Text(
+                                text = "Nenhum planejamento encontrado para este mês.",
+                                fontSize = 16.sp,
+                                color = Color.Gray
+                            )
+                        }
                     }
                 }
             }

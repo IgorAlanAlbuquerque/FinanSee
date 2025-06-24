@@ -1,4 +1,4 @@
-package com.igor.finansee.models
+package com.igor.finansee.data.models
 
 import com.igor.finansee.R
 import java.time.LocalDate

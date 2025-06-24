@@ -1,4 +1,4 @@
-package com.igor.finansee.models
+package com.igor.finansee.data.models
 
 data class Category(
     val id: Int,

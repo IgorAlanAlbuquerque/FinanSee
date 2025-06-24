@@ -5,8 +5,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.igor.finansee.models.TransactionType
-import com.igor.finansee.models.categoryList
+import com.igor.finansee.data.models.TransactionType
+import com.igor.finansee.data.models.categoryList
 import com.igor.finansee.ui.theme.IconBgBlue
 import com.igor.finansee.ui.theme.IconBgGreen
 import com.igor.finansee.ui.theme.IconBgPurple

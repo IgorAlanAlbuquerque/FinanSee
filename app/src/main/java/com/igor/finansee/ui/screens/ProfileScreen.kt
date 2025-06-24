@@ -30,7 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.igor.finansee.models.User
+import com.igor.finansee.data.models.User
 import com.igor.finansee.ui.theme.IconColorLight
 import com.igor.finansee.ui.theme.LightCardBackgroundColor
 import com.igor.finansee.ui.theme.LightPurple

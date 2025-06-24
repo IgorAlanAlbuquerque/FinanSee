@@ -1,7 +1,6 @@
 package com.igor.finansee.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,7 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.igor.finansee.models.User
+import com.igor.finansee.data.models.User
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
@@ -33,13 +32,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.igor.finansee.models.Transaction
-import com.igor.finansee.models.TransactionType
-import com.igor.finansee.models.transactionList
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.igor.finansee.data.models.Transaction
+import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.ui.components.formatDateHeader
 import com.igor.finansee.ui.theme.AmountGreenTransactions
 import com.igor.finansee.ui.theme.AmountRedTransactions
@@ -48,40 +46,20 @@ import com.igor.finansee.ui.components.getCategoryUIDetails
 import com.igor.finansee.ui.theme.LightCardBackgroundColor
 import com.igor.finansee.ui.theme.TextPrimaryLight
 import com.igor.finansee.ui.theme.TextSecondaryLight
+import com.igor.finansee.viewmodels.TransactionScreenViewModel
 
 @Composable
 fun TransactionScreen(
     navController: NavHostController,
     currentUser: User,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: TransactionScreenViewModel = viewModel()
 ) {
-    var selectedMonth by remember { mutableStateOf(YearMonth.now()) }
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Filtra transações pelo usuário atual e pelo mês selecionado
-    val userTransactionsForMonth = remember(transactionList, currentUser, selectedMonth) {
-        transactionList
-            .filter { it.userId == currentUser.id &&
-                    it.date.year == selectedMonth.year &&
-                    it.date.month == selectedMonth.month }
-            .sortedByDescending { it.date }
+    LaunchedEffect(key1 = currentUser) {
+        viewModel.loadInitialData(currentUser)
     }
-
-    val transactionsByDate = remember(userTransactionsForMonth) {
-        userTransactionsForMonth.groupBy { it.date } // Agrupa por LocalDate
-    }
-
-    // Calcula o balanço mensal
-    val monthlyBalance = remember(userTransactionsForMonth) {
-        val income = userTransactionsForMonth
-            .filter { it.type == TransactionType.INCOME || it.type == TransactionType.TRANSFER_IN }
-            .sumOf { it.value }
-        val expenses = userTransactionsForMonth
-            .filter { it.type == TransactionType.EXPENSE || it.type == TransactionType.TRANSFER_OUT || it.type == TransactionType.CREDIT_CARD_EXPENSE }
-            .sumOf { it.value }
-        income - expenses
-    }
-    // Saldo Atual
-    val currentOverallBalance = 0.00
 
     Column(
         modifier = modifier
@@ -89,21 +67,27 @@ fun TransactionScreen(
             .background(LightCardBackgroundColor)
             .padding(top = 16.dp)
     ) {
-
         MonthSelector(
-            currentMonth = selectedMonth,
-            onPreviousMonth = { selectedMonth = selectedMonth.minusMonths(1) },
-            onNextMonth = { selectedMonth = selectedMonth.plusMonths(1) }
+            currentMonth = uiState.selectedMonth,
+            onPreviousMonth = { viewModel.selectPreviousMonth() },
+            onNextMonth = { viewModel.selectNextMonth() }
         )
 
         SummaryCards(
-            currentBalance = currentOverallBalance, // Usar o valor calculado ou placeholder
-            monthlyBalance = monthlyBalance
+            currentBalance = uiState.currentOverallBalance,
+            monthlyBalance = uiState.monthlyBalance
         )
 
-        if (userTransactionsForMonth.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                Text("Nenhuma transação para este mês.", color = TextSecondaryLight, fontSize = 16.sp)
+        if (uiState.transactionsByDate.isEmpty() && !uiState.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "Nenhuma transação para este mês.",
+                    color = TextSecondaryLight,
+                    fontSize = 16.sp
+                )
             }
         } else {
             LazyColumn(
@@ -111,7 +95,7 @@ fun TransactionScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                transactionsByDate.forEach { (date, transactionsInGroup) ->
+                uiState.transactionsByDate.forEach { (date, transactionsInGroup) ->
                     item {
                         TransactionDateHeader(date = formatDateHeader(date))
                     }
@@ -218,7 +202,7 @@ fun SummaryCard(
 @Composable
 fun TransactionDateHeader(date: String) {
     Text(
-        text = date, // Agora usa a string formatada de formatDateHeader
+        text = date,
         fontSize = 14.sp,
         fontWeight = FontWeight.Medium,
         color = TextSecondaryLight,

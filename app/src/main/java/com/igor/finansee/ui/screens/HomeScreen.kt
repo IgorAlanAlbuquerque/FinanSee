@@ -37,6 +37,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,10 +45,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,23 +61,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import com.igor.finansee.models.BankAccount
-import com.igor.finansee.models.Category
-import com.igor.finansee.models.CreditCard
-import com.igor.finansee.models.FaturaCreditCard
-import com.igor.finansee.models.MonthPlanning
-import com.igor.finansee.models.TransactionType
-import com.igor.finansee.models.User
-import com.igor.finansee.models.creditCardList
-import com.igor.finansee.models.bankAccountList
-import com.igor.finansee.models.categoryList
-import com.igor.finansee.models.transactionList
-import com.igor.finansee.models.faturaCreditCardList
-import com.igor.finansee.models.mockMonthPlanningList
+import com.igor.finansee.data.models.BankAccount
+import com.igor.finansee.data.models.Category
+import com.igor.finansee.data.models.CreditCard
+import com.igor.finansee.data.models.FaturaCreditCard
+import com.igor.finansee.data.models.MonthPlanning
+import com.igor.finansee.data.models.*
 import com.igor.finansee.ui.theme.BackgroundGray
 import com.igor.finansee.ui.theme.GreenSuccess
 import com.igor.finansee.ui.theme.LightPurple
 import com.igor.finansee.ui.theme.RedExpense
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.igor.finansee.viewmodels.HomeScreenViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -110,88 +105,29 @@ data class CategoryWithAmount(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen (navController: NavHostController, currentUser: User) {
-    var showBalance by remember { mutableStateOf(true) }
+fun HomeScreen(
+    navController: NavHostController,
+    currentUser: User,
+    viewModel: HomeScreenViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
 
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-
-    val currentUserId = currentUser.id
-    val userTransactions = remember(currentUserId) { transactionList.filter { it.userId == currentUserId } }
-    val userBankAccounts = remember(currentUserId) { bankAccountList.filter { it.userId == currentUserId } }
-    val userCreditCards = remember(currentUserId) { creditCardList.filter { it.userId == currentUserId } }
-    val totalAccountBalance = remember(userBankAccounts) { userBankAccounts.sumOf { it.currentBalance } }
-
-    val incomeForSelectedMonth = remember(userTransactions, selectedDate) {
-        userTransactions
-            .filter {
-                it.date.month == selectedDate.month && it.date.year == selectedDate.year && it.type == TransactionType.INCOME
-            }
-            .sumOf { it.value }
-    }
-
-    val expensesForSelectedMonth = remember(userTransactions, userCreditCards, faturaCreditCardList, selectedDate){
-        val directExpenses = userTransactions
-            .filter {
-                it.date.month == selectedDate.month && it.date.year == selectedDate.year &&
-                        it.type == TransactionType.EXPENSE // Apenas despesas diretas, sem considerar CREDIT_CARD_EXPENSE aqui
-            }
-            .sumOf { it.value }
-
-        val creditCardInvoiceExpenses = faturaCreditCardList
-            .filter { fatura ->
-                // Filtra as faturas que pertencem aos cartões do usuário logado
-                userCreditCards.any { it.id == fatura.creditCardId } &&
-                        // E que são do mês e ano selecionados
-                        fatura.month.month == selectedDate.month && fatura.month.year == selectedDate.year
-            }
-            .sumOf { it.valor }
-
-        directExpenses + creditCardInvoiceExpenses
-    }
-
-    val transAgrByCategory = remember(userTransactions, selectedDate){
-         val temp = userTransactions
-            .filter {
-                it.date.month == selectedDate.month && it.date.year == selectedDate.year &&
-                        (it.type == TransactionType.EXPENSE || it.type == TransactionType.CREDIT_CARD_EXPENSE)
-            }
-
-        temp
-            .groupBy { it.categoryId }
-            .map { (categoryId, transactionsList) ->
-                val category = categoryList.find { it.id == categoryId } ?: Category(categoryId, "Outros")
-                CategoryWithAmount(category, transactionsList.sumOf { it.value })
-            }
-            .sortedByDescending { it.totalAmount }
-    }
-
-    // Lógica para obter a fatura atual para a CreditCardSection
-    val currentMonthFaturasForUser = remember(userCreditCards, faturaCreditCardList, selectedDate) {
-        // Filtra todas as faturas do usuário para o mês selecionado
-        faturaCreditCardList.filter { fatura ->
-            userCreditCards.any { it.id == fatura.creditCardId } &&
-                    fatura.month.month == selectedDate.month &&
-                    fatura.month.year == selectedDate.year
-        }
-    }
-
-    // Calcula o total das faturas do mês selecionado para o rodapé do card de cartão
-    val totalCreditCardInvoiceAmount = remember(currentMonthFaturasForUser) {
-        currentMonthFaturasForUser.sumOf { it.valor }
+    LaunchedEffect(key1 = currentUser) {
+        viewModel.loadInitialData(currentUser)
     }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundGray), // Define a cor de fundo do LazyColumn
+            .background(BackgroundGray),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp), // Espaçamento entre os "cards"
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp) // Padding ao redor do conteúdo
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp)
     ) {
         item {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Olá, ${currentUser.name.split(" ")[0]}!",
+                    text = "Olá, ${uiState.userName}!",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -205,58 +141,61 @@ fun HomeScreen (navController: NavHostController, currentUser: User) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(onClick = { selectedDate = selectedDate.minusMonths(1) }) {
+                IconButton(onClick = { viewModel.selectPreviousMonth() }) {
                     Icon(Icons.Filled.ChevronLeft, contentDescription = "Mês anterior")
                 }
                 Text(
-                    text = selectedDate.month.getDisplayName(TextStyle.FULL, Locale("pt", "BR")) + " " + selectedDate.year,
+                    text = uiState.selectedDate.month.getDisplayName(TextStyle.FULL, Locale("pt", "BR")) + " " + uiState.selectedDate.year,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
                 )
-                IconButton(onClick = { selectedDate = selectedDate.plusMonths(1) }) {
-                        Icon(Icons.Filled.ChevronRight, contentDescription = "Próximo mês")
+                IconButton(onClick = { viewModel.selectNextMonth() }) {
+                    Icon(Icons.Filled.ChevronRight, contentDescription = "Próximo mês")
                 }
             }
         }
         item {
             BalanceSection(
-                balance = "R$%.2f".format(totalAccountBalance),
-                showBalance = showBalance,
-                onToggleVisibility = { showBalance = !showBalance }
+                balance = "R$%.2f".format(uiState.totalAccountBalance),
+                showBalance = uiState.showBalance,
+                onToggleVisibility = { viewModel.toggleBalanceVisibility() }
             )
         }
         item {
             IncomeExpenseSection(
-                totalIncome = "R$%.2f".format(incomeForSelectedMonth),
-                totalExpenses = "R$%.2f".format(expensesForSelectedMonth)
+                totalIncome = "R$%.2f".format(uiState.incomeForSelectedMonth),
+                totalExpenses = "R$%.2f".format(uiState.expensesForSelectedMonth)
             )
         }
         item {
-            AccountsSection(userBankAccounts)
+            AccountsSection(uiState.userBankAccounts)
         }
         item {
             CreditCardSection(
-                userCreditCards = userCreditCards,
-                currentMonthFaturas = currentMonthFaturasForUser,
-                totalCreditCardInvoiceAmount = totalCreditCardInvoiceAmount,
-                selectedDate = selectedDate
+                userCreditCards = uiState.userCreditCards,
+                currentMonthFaturas = uiState.currentMonthFaturas,
+                totalCreditCardInvoiceAmount = uiState.totalCreditCardInvoiceAmount,
+                selectedDate = uiState.selectedDate
             )
         }
         item {
-            ExpensesByCategory(transAgrByCategory)
+            ExpensesByCategory(uiState.expensesByCategory)
         }
         item {
-            MonthPlan(
-                selectedDate = selectedDate,
-                currentUser = currentUser,
-                actualTotalExpenses = expensesForSelectedMonth,
-                actualExpensesByCategory = transAgrByCategory,
-                allCategories = categoryList, // Passe a lista de todas as categorias
-                planningList = mockMonthPlanningList // Passe a lista de planejamentos
-            )
+            uiState.currentMonthPlanning?.let {
+                MonthPlan(
+                    selectedDate = uiState.selectedDate,
+                    currentUser = currentUser,
+                    actualTotalExpenses = uiState.expensesForSelectedMonth,
+                    actualExpensesByCategory = uiState.expensesByCategory,
+                    allCategories = uiState.allCategories,
+                    planningList = listOf(it)
+                )
+            }
         }
     }
 }
+
 
 @Composable
 fun BalanceSection(balance: String, showBalance: Boolean, onToggleVisibility: () -> Unit) {
@@ -377,7 +316,7 @@ fun AccountsSection(userBankAccounts: List<BankAccount>) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row( // Título e ícone no cabeçalho da seção
+        Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -388,9 +327,8 @@ fun AccountsSection(userBankAccounts: List<BankAccount>) {
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
-            // Ícone "quadradinhos" como na imagem, representando "ver todas"
             Icon(
-                imageVector = Icons.AutoMirrored.Outlined.ListAlt, // Ou um ícone mais adequado, como um de "grid"
+                imageVector = Icons.AutoMirrored.Outlined.ListAlt,
                 contentDescription = "Ver todas as contas",
                 tint = Color.Gray,
                 modifier = Modifier.size(24.dp)
@@ -398,16 +336,14 @@ fun AccountsSection(userBankAccounts: List<BankAccount>) {
         }
         Spacer(modifier = Modifier.height(12.dp))
 
-        // O GRANDE CARD que conterá todas as contas e o total
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp), // Use um arredondamento maior para o Card principal
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) { // Padding interno para o conteúdo do Card
+            Column(modifier = Modifier.padding(16.dp)) {
                 if (userBankAccounts.isEmpty()) {
-                    // Mensagem se não houver contas
                     Text(
                         text = "Nenhuma conta cadastrada ainda.",
                         color = Color.Gray,
@@ -424,34 +360,31 @@ fun AccountsSection(userBankAccounts: List<BankAccount>) {
                         Text("ADICIONAR CONTA", color = Color.White)
                     }
                 } else {
-                    // Itera sobre as contas e exibe cada uma
                     userBankAccounts.forEach { account ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp), // Espaçamento entre cada linha de conta
+                                .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                // Ícone da conta (ex: R$ para carteira, logo do Nubank para Nubank)
-                                // Você pode adicionar lógica para escolher o ícone baseado no nome/tipo do banco
                                 val accountIcon = when (account.name.lowercase()) {
                                     "carteira" -> Icons.Outlined.AccountBalanceWallet
-                                    "nubank" -> Icons.Outlined.CreditCard // Ou um ícone mais genérico se não tiver o logo
-                                    else -> Icons.Outlined.Home // Ícone padrão
+                                    "nubank" -> Icons.Outlined.CreditCard
+                                    else -> Icons.Outlined.Home
                                 }
                                 Box(
                                     modifier = Modifier
                                         .size(36.dp)
                                         .clip(CircleShape)
-                                        .background(Color.LightGray.copy(alpha = 0.2f)), // Fundo leve para o ícone
+                                        .background(Color.LightGray.copy(alpha = 0.2f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = accountIcon,
                                         contentDescription = account.name,
-                                        tint = LightPurple, // Cor do ícone
+                                        tint = LightPurple,
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
@@ -475,9 +408,8 @@ fun AccountsSection(userBankAccounts: List<BankAccount>) {
 
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 8.dp),
-                    ) // Linha divisória
+                    )
 
-                    // Saldo Total de todas as contas
                     val totalBalanceOfAllAccounts = userBankAccounts.sumOf { it.currentBalance }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -506,14 +438,14 @@ fun AccountsSection(userBankAccounts: List<BankAccount>) {
 @Composable
 fun CreditCardSection(
     userCreditCards: List<CreditCard>,
-    currentMonthFaturas: List<FaturaCreditCard>, // Lista de faturas do mês selecionado para TODOS os cartões do usuário
-    totalCreditCardInvoiceAmount: Double, // Total das faturas para o rodapé
-    selectedDate: LocalDate // Passado para exibir a data de fechamento/vencimento
+    currentMonthFaturas: List<FaturaCreditCard>,
+    totalCreditCardInvoiceAmount: Double,
+    selectedDate: LocalDate
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Section Header (Cartões de Crédito, Icon)
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -527,7 +459,7 @@ fun CreditCardSection(
             )
             Icon(
                 imageVector = Icons.Outlined.CreditCard,
-                contentDescription = "Ícone de cartões", // More descriptive
+                contentDescription = "Ícone de cartões",
                 tint = Color.Gray,
                 modifier = Modifier.size(24.dp)
             )
@@ -535,7 +467,7 @@ fun CreditCardSection(
         Spacer(modifier = Modifier.height(12.dp))
 
         if (userCreditCards.isEmpty()) {
-            // "Nenhum cartão cadastrado" UI - Stays the same
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -571,15 +503,15 @@ fun CreditCardSection(
                 }
             }
         } else {
-            // Display each card
+
             userCreditCards.forEachIndexed { index, creditCard ->
-                // Find the fatura for THIS specific creditCard for the selected month
+
                 val currentFaturaForThisCard = currentMonthFaturas.find { it.creditCardId == creditCard.id }
 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        // Add bottom margin if it's not the last card, to space them from the total summary
+
                         .padding(bottom = if (index < userCreditCards.size -1) 16.dp else 0.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -589,27 +521,27 @@ fun CreditCardSection(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween // Pushes content to ends
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
                                         .size(48.dp)
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(Color.LightGray.copy(alpha = 0.3f)), // Placeholder background
+                                        .background(Color.LightGray.copy(alpha = 0.3f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Outlined.CreditCard, // Replace with bank-specific logo if available
+                                        imageVector = Icons.Outlined.CreditCard,
                                         contentDescription = "Logo do Cartão ${creditCard.bankName}",
-                                        tint = LightPurple, // Or card-specific color
+                                        tint = LightPurple,
                                         modifier = Modifier.size(32.dp)
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = "Cartão ${creditCard.bankName}", // Or a nickname for the card
+                                        text = "Cartão ${creditCard.bankName}",
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 16.sp,
                                         color = Color.Black
@@ -619,10 +551,9 @@ fun CreditCardSection(
                         }
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Buttons "Faturas abertas" e "Faturas fechadas" - per card
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp) // Or Arrangement.Start
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Button(
                                 onClick = { /* TODO: Ação para Faturas abertas DESTE CARTÃO (creditCard.id) */ },
@@ -631,18 +562,18 @@ fun CreditCardSection(
                                     contentColor = LightPurple
                                 ),
                                 shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp) // Adjusted padding
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                             ) {
                                 Text("Faturas abertas", fontSize = 12.sp)
                             }
                             Button(
                                 onClick = { /* TODO: Ação para Faturas fechadas DESTE CARTÃO (creditCard.id) */ },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.LightGray.copy(alpha = 0.3f), // Slightly different gray
-                                    contentColor = Color.DarkGray // Darker gray for better contrast
+                                    containerColor = Color.LightGray.copy(alpha = 0.3f),
+                                    contentColor = Color.DarkGray
                                 ),
                                 shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp) // Adjusted padding
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                             ) {
                                 Text("Faturas fechadas", fontSize = 12.sp)
                             }
@@ -650,7 +581,6 @@ fun CreditCardSection(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         if (currentFaturaForThisCard != null) {
-                            // Detalhes da fatura atual
                             Text(
                                 text = "Fatura Atual:",
                                 fontSize = 14.sp,
@@ -658,12 +588,12 @@ fun CreditCardSection(
                             )
                             Text(
                                 text = "R$%.2f".format(currentFaturaForThisCard.valor),
-                                fontSize = 20.sp, // Slightly larger for emphasis
+                                fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = LightPurple
                             )
                             Spacer(modifier = Modifier.height(8.dp))
-                            // Data de fechamento da fatura
+
                             val closingDateFatura = LocalDate.of(
                                 currentFaturaForThisCard.month.year,
                                 currentFaturaForThisCard.month.month,
@@ -674,18 +604,14 @@ fun CreditCardSection(
                                 fontSize = 14.sp,
                                 color = Color.Gray
                             )
-                            // You could also add due date here if available in your model, e.g.:
-                            // val dueDateFatura = closingDateFatura.plusDays(creditCard.paymentDueDayOffset) // Example
-                            // Text(text = "Vence em ${dueDateFatura.format(DateTimeFormatter.ofPattern("dd 'de' MMMM, yyyy", Locale("pt", "BR")))}", fontSize = 14.sp, color = Color.DarkGray)
 
                         } else {
-                            // No fatura for this card in the selected month
                             Column(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally // Center text
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Icon(
-                                    imageVector = Icons.Outlined.CreditCard, // Or a specific "no invoice" icon
+                                    imageVector = Icons.Outlined.CreditCard,
                                     contentDescription = "Nenhuma fatura",
                                     modifier = Modifier.size(32.dp),
                                     tint = Color.Gray
@@ -701,21 +627,18 @@ fun CreditCardSection(
                         }
                     }
                 }
-                // Add a spacer between cards if listing multiple, but not after the last one before the total.
                 if (index < userCreditCards.size - 1) {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 
-            // This "Total" footer is displayed ONCE, after all cards.
-            // It summarizes the invoices for ALL cards for the selected month.
-            Spacer(modifier = Modifier.height(16.dp)) // Space before the divider
+            Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
-            Spacer(modifier = Modifier.height(12.dp)) // Space after divider, before total text
+            Spacer(modifier = Modifier.height(12.dp))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp), // Slight horizontal padding for the total row
+                    .padding(horizontal = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -738,7 +661,7 @@ fun CreditCardSection(
 
 
 
-@OptIn(ExperimentalMaterial3Api::class) // Se você usa APIs experimentais do Material3
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpensesByCategory(transactionsByCategory: List<CategoryWithAmount>) {
     Column(
@@ -752,7 +675,6 @@ fun ExpensesByCategory(transactionsByCategory: List<CategoryWithAmount>) {
         )
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Verifica se a lista de despesas por categoria está vazia
         if (transactionsByCategory.isEmpty()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -788,7 +710,6 @@ fun ExpensesByCategory(transactionsByCategory: List<CategoryWithAmount>) {
                 }
             }
         } else {
-            // Se houver despesas, calcule o total para o gráfico e lista
             val totalExpenses = transactionsByCategory.sumOf { it.totalAmount }
 
             Card(
@@ -801,15 +722,14 @@ fun ExpensesByCategory(transactionsByCategory: List<CategoryWithAmount>) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(120.dp) // Altura fixa para o gráfico
+                            .height(120.dp)
                             .padding(bottom = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        // Gráfico de Pizza (Círculo Vazado)
                         Box(
                             modifier = Modifier
-                                .size(100.dp) // Tamanho do círculo do gráfico
+                                .size(100.dp)
                                 .clip(CircleShape)
                                 .background(Color.Transparent),
                             contentAlignment = Alignment.Center
@@ -824,10 +744,10 @@ fun ExpensesByCategory(transactionsByCategory: List<CategoryWithAmount>) {
                                         color = color,
                                         startAngle = startAngle,
                                         sweepAngle = sweepAngle,
-                                        useCenter = false, // Não preenche o centro
+                                        useCenter = false,
                                         topLeft = Offset.Zero,
                                         size = Size(size.width, size.height),
-                                        style = Stroke(width = 20.dp.toPx()) // Espessura do anel
+                                        style = Stroke(width = 20.dp.toPx())
                                     )
                                     startAngle += sweepAngle
                                 }
@@ -836,7 +756,6 @@ fun ExpensesByCategory(transactionsByCategory: List<CategoryWithAmount>) {
 
                         Spacer(modifier = Modifier.width(16.dp))
 
-                        // Lista de Legendas das Categorias (Pontos e Nomes)
                         Column(
                             modifier = Modifier.weight(1f)
                         ) {
@@ -861,7 +780,6 @@ fun ExpensesByCategory(transactionsByCategory: List<CategoryWithAmount>) {
                         }
                     }
 
-                    // Lista de Categorias com valores e botão de adição
                     transactionsByCategory.forEachIndexed { index, data ->
                         val categoryName = data.category.name
                         val totalAmount = data.totalAmount
@@ -873,7 +791,6 @@ fun ExpensesByCategory(transactionsByCategory: List<CategoryWithAmount>) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                // Ponto colorido antes do nome da categoria
                                 Box(
                                     modifier = Modifier
                                         .size(8.dp)
@@ -897,7 +814,6 @@ fun ExpensesByCategory(transactionsByCategory: List<CategoryWithAmount>) {
                             }
                         }
                     }
-                    // Divisor e Total Geral de Despesas
                     Spacer(modifier = Modifier.height(8.dp))
                     HorizontalDivider()
                     Spacer(modifier = Modifier.height(8.dp))
@@ -961,21 +877,19 @@ fun MonthPlan(
         } else {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp) // Para não colar nas bordas
+                contentPadding = PaddingValues(horizontal = 4.dp)
             ) {
-                // Card: Planejamento Total
                 val totalPlannedTargetAmount = currentPlanning.totalMonthlyIncome * (currentPlanning.targetSpendingPercentage / 100.0)
                 item {
                     PlanningCard(
                         icon = Icons.Filled.AccountBalanceWallet,
                         title = "Planejamento total",
-                        actualSpent = actualTotalExpenses, // Este é o total de despesas do mês
+                        actualSpent = actualTotalExpenses,
                         plannedAmount = totalPlannedTargetAmount,
                         iconBackgroundColor = IconBackgroundBlue
                     )
                 }
 
-                // Cards: Categorias Planejadas
                 items(currentPlanning.categorySpendingPlan) { plannedCategory ->
                     val category = allCategories.find { it.id == plannedCategory.categoryId }
                     val actualSpentForCategory = actualExpensesByCategory
@@ -998,7 +912,6 @@ fun MonthPlan(
 
 fun getIconForCategory(categoryId: Int): ImageVector {
     return when (categoryId) {
-        // IDs da sua categoryList
         6 -> Icons.Filled.Restaurant // Alimentação
         7 -> Icons.Filled.Home // Moradia
         8 -> Icons.Filled.DirectionsCar // Transporte
@@ -1035,29 +948,26 @@ fun PlanningCard(
     iconBackgroundColor: Color
 ) {
     val percentage = if (plannedAmount > 0.005) (actualSpent / plannedAmount) * 100 else if (actualSpent > 0) 200.0 else 0.0
-    // Usar 0.005 para evitar divisão por zero ou valores muito pequenos de plannedAmount
-    // Coerce progress para o LinearProgressIndicator (0f a 1f)
-    // Para o texto, o percentage pode ser > 100%
     val visualProgress = if (plannedAmount > 0.005) (actualSpent / plannedAmount).toFloat() else if (actualSpent > 0) 1f else 0f
 
     val difference = actualSpent - plannedAmount
     val statusText: String
     val statusTextColor: Color
 
-    if (difference > 0.005) { // Excedeu (considerando uma pequena margem para igualdade de float)
+    if (difference > 0.005) {
         statusText = "Excedeu R$${"%.2f".format(difference)}"
         statusTextColor = ProgressBarExceededColor
-    } else { // Resta ou está em dia
-        statusText = "Restam R$${"%.2f".format(-difference)}" // -difference será o valor restante
-        statusTextColor = TextColorSecondary // Cinza claro para "Restam"
+    } else {
+        statusText = "Restam R$${"%.2f".format(-difference)}"
+        statusTextColor = TextColorSecondary
     }
 
     val progressBarColor = if (difference > 0.005) ProgressBarExceededColor else ProgressBarNormalColor
 
     Card(
         modifier = Modifier
-            .width(260.dp) // Largura do card
-            .height(IntrinsicSize.Min), // Ajusta a altura ao conteúdo
+            .width(260.dp)
+            .height(IntrinsicSize.Min),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CardBackgroundColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -1069,7 +979,7 @@ fun PlanningCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(36.dp) // Tamanho do círculo do ícone
+                        .size(36.dp)
                         .clip(CircleShape)
                         .background(iconBackgroundColor),
                     contentAlignment = Alignment.Center
@@ -1078,7 +988,7 @@ fun PlanningCard(
                         imageVector = icon,
                         contentDescription = title,
                         tint = TextColorPrimary,
-                        modifier = Modifier.size(20.dp) // Tamanho do ícone
+                        modifier = Modifier.size(20.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -1104,24 +1014,24 @@ fun PlanningCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(18.dp)) // Aumentar espaço antes da barra
+            Spacer(modifier = Modifier.height(18.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 LinearProgressIndicator(
-                    progress = { visualProgress.coerceIn(0f, 1f) }, // Progresso visual limitado a 100% na barra
+                    progress = { visualProgress.coerceIn(0f, 1f) },
                     modifier = Modifier
                         .weight(1f)
-                        .height(10.dp) // Barra mais grossa
+                        .height(10.dp)
                         .clip(RoundedCornerShape(5.dp)),
                     color = progressBarColor,
                     trackColor = Color.DarkGray.copy(alpha = 0.4f)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    "${"%.0f".format(percentage)}%", // Porcentagem sem casas decimais como nos exemplos
+                    "${"%.0f".format(percentage)}%",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (difference > 0.005) ProgressBarExceededColor else TextColorPrimary
@@ -1137,8 +1047,6 @@ fun PlanningCard(
             if (difference > 0.005 && plannedAmount > 0.005) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    // Texto como no exemplo: "366,30% Despesas previstas excedentes"
-                    // Usando a porcentagem calculada e formatada:
                     "${"%.2f".format(percentage)}% Despesas previstas excedentes",
                     fontSize = 11.sp,
                     color = ProgressBarExceededColor,

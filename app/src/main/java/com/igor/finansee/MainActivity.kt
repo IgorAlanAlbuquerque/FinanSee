@@ -5,18 +5,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.igor.finansee.data.datastore.UserPreferencesRepository
 import com.igor.finansee.ui.components.BottomNavigationBar
 import com.igor.finansee.ui.components.DrawerContent
 import com.igor.finansee.ui.components.TopBar
@@ -27,10 +30,11 @@ import com.igor.finansee.ui.screens.ProfileScreen
 import com.igor.finansee.ui.screens.TransactionScreen
 import com.igor.finansee.ui.theme.FinanSeeTheme
 import kotlinx.coroutines.launch
-import com.igor.finansee.models.userList
-import androidx.activity.compose.setContent
-import androidx.navigation.compose.rememberNavController
-import com.igor.finansee.navigation.NavAuth
+import com.igor.finansee.data.models.userList
+import com.igor.finansee.ui.screens.NotificationSettingsScreen
+import com.igor.finansee.ui.screens.SettingsScreen
+import com.igor.finansee.viewmodels.SettingsViewModel
+import com.igor.finansee.viewmodels.SettingsViewModelFactory
 
 /*class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,11 +72,18 @@ class MainActivity : ComponentActivity() {
                         DrawerContent(navController) { }
                     },
                     content = {
+                        var menuExpanded by remember { mutableStateOf(false) }
                         Scaffold(
                             topBar = {
                                 TopBar(
-                                    on3Points = {  },
-                                    onOpenDrawer = { scope.launch { drawerState.open() } }
+                                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                                    isMenuExpanded = menuExpanded,
+                                    onToggleMenu = { menuExpanded = !menuExpanded },
+                                    onDismissMenu = { menuExpanded = false },
+                                    onNavigate = { route ->
+                                        menuExpanded = false
+                                        navController.navigate(route)
+                                    }
                                 )
                             },
                             bottomBar = { BottomNavigationBar(navController) }
@@ -87,6 +98,31 @@ class MainActivity : ComponentActivity() {
                                 composable("add") { AddScreen(navController) }
                                 composable("plans") { PlansScreen(navController) }
                                 composable("transactions") { TransactionScreen(navController, currentUser) }
+
+                                composable("settings") {
+                                    val context = LocalContext.current
+                                    val repository = remember { UserPreferencesRepository(context) }
+                                    val factory = remember { SettingsViewModelFactory(repository) }
+                                    val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
+
+                                    SettingsScreen(
+                                        onNavigateBack = { navController.popBackStack() },
+                                        onNavigateToNotifications = { navController.navigate("notification_settings") },
+                                        viewModel = settingsViewModel
+                                    )
+                                }
+
+                                composable("notification_settings") {
+                                    val context = LocalContext.current
+                                    val repository = remember { UserPreferencesRepository(context) }
+                                    val factory = remember { SettingsViewModelFactory(repository) }
+                                    val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
+
+                                    NotificationSettingsScreen(
+                                        onNavigateBack = { navController.popBackStack() },
+                                        viewModel = settingsViewModel
+                                    )
+                                }
                             }
                         }
                     }
