@@ -1,35 +1,71 @@
 package com.igor.finansee.ui.screens
 
-import androidx.compose.foundation.layout.Column
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import com.igor.finansee.ui.components.SettingsClickableRow
 import com.igor.finansee.ui.components.SettingsSwitchRow
+import com.igor.finansee.utils.PermissionUtils
 import com.igor.finansee.viewmodels.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationSettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToEmailSettings: () -> Unit,
+    onNavigateDailyReminder: () -> Unit,
     viewModel: SettingsViewModel
 ) {
     val userPreferences by viewModel.uiState.collectAsState()
+
+    val context = LocalContext.current
+
+    var showPermissionDialog by remember { mutableStateOf(false) }
+
+    val isPermissionGranted = PermissionUtils.isNotificationServiceEnabled(context)
+
+    if (showPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDialog = false },
+            title = { Text("Leitura de Notificações") },
+            text = { Text("Para capturar seus gastos automaticamente, o FinanSee precisa de permissão para ler as notificações de aplicativos como Nubank e outros bancos.\n\nSeus dados são processados localmente e nunca compartilhados. Deseja conceder a permissão?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showPermissionDialog = false
+                        context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                    }
+                ) {
+                    Text("Conceder Permissão")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -55,21 +91,20 @@ fun NotificationSettingsScreen(
                 SettingsClickableRow(
                     title = "Configuração de Email",
                     subtitle = "Gerenciar conteúdo recebido por e-mail do Mobills",
-                    onClick = { /* TODO: Navegar para uma tela específica ou abrir um diálogo */ }
+                    onClick = onNavigateToEmailSettings
                 )
             }
             item {
                 SettingsClickableRow(
                     title = "Leitura de notificação",
-                    subtitle = "Habilitar permissão para ler notificações de cartões. Ex: Nubank, Digio.",
-                    onClick = { /* TODO: Chamar viewModel para pedir permissão de NotificationListenerService */ }
-                )
-            }
-            item {
-                SettingsClickableRow(
-                    title = "Leitura padrão de Notificação",
-                    subtitle = "Define se a Notificação por padrão será um débito ou crédito.",
-                    onClick = { /* TODO: Abrir um diálogo de seleção (débito/crédito) */ }
+                    subtitle = if (isPermissionGranted) "Ativado" else "Desativado",
+                    onClick = {
+                        if (!isPermissionGranted) {
+                            showPermissionDialog = true
+                        } else {
+                            context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                        }
+                    }
                 )
             }
             item {
@@ -81,16 +116,17 @@ fun NotificationSettingsScreen(
                 )
             }
             item {
-                Column(Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
-                    Text("Pendências e alertas", style = MaterialTheme.typography.bodyLarge)
+                val userPreferences by viewModel.uiState.collectAsState()
+                val subtitle = if (userPreferences.dailyReminderHour != -1) {
+                    "Lembrete às ${String.format("%02d:%02d", userPreferences.dailyReminderHour, userPreferences.dailyReminderMinute)}"
+                } else {
+                    "Sem alerta"
                 }
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
-            }
-            item {
+
                 SettingsClickableRow(
                     title = "Lembrete diário",
-                    subtitle = "Sem alerta", // TODO: Mostrar o horário salvo se houver um
-                    onClick = { /* TODO: Abrir um TimePickerDialog para o usuário escolher a hora */ }
+                    subtitle = subtitle,
+                    onClick = onNavigateDailyReminder
                 )
             }
         }

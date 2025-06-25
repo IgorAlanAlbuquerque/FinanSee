@@ -31,6 +31,8 @@ import com.igor.finansee.ui.screens.TransactionScreen
 import com.igor.finansee.ui.theme.FinanSeeTheme
 import kotlinx.coroutines.launch
 import com.igor.finansee.data.models.userList
+import com.igor.finansee.ui.screens.DailyReminderScreen
+import com.igor.finansee.ui.screens.EmailSettingsScreen
 import com.igor.finansee.ui.screens.NotificationSettingsScreen
 import com.igor.finansee.ui.screens.SettingsScreen
 import com.igor.finansee.viewmodels.SettingsViewModel
@@ -119,6 +121,32 @@ class MainActivity : ComponentActivity() {
                                     val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
 
                                     NotificationSettingsScreen(
+                                        onNavigateBack = { navController.popBackStack() },
+                                        onNavigateToEmailSettings =  {navController.navigate("email_settings")},
+                                        onNavigateDailyReminder = {navController.navigate("daily_reminder")},
+                                        viewModel = settingsViewModel
+                                    )
+                                }
+
+                                composable("email_settings") {
+                                    val context = LocalContext.current
+                                    val repository = remember { UserPreferencesRepository(context) }
+                                    val factory = remember { SettingsViewModelFactory(repository) }
+                                    val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
+
+                                    EmailSettingsScreen(
+                                        onNavigateBack = { navController.popBackStack() },
+                                        viewModel = settingsViewModel
+                                    )
+                                }
+
+                                composable("daily_reminder") {
+                                    val context = LocalContext.current
+                                    val repository = remember { UserPreferencesRepository(context) }
+                                    val factory = remember { SettingsViewModelFactory(repository) }
+                                    val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
+
+                                    DailyReminderScreen(
                                         onNavigateBack = { navController.popBackStack() },
                                         viewModel = settingsViewModel
                                     )
