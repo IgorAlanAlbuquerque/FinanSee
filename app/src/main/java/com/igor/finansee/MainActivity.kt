@@ -1,10 +1,7 @@
 package com.igor.finansee
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
@@ -13,7 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -37,6 +33,19 @@ import com.igor.finansee.ui.screens.NotificationSettingsScreen
 import com.igor.finansee.ui.screens.SettingsScreen
 import com.igor.finansee.viewmodels.SettingsViewModel
 import com.igor.finansee.viewmodels.SettingsViewModelFactory
+import androidx.compose.material3.FabPosition
+import androidx.compose.ui.unit.dp
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.DrawerValue
+
+import androidx.compose.ui.Modifier
+import com.igor.finansee.ui.components.CircularActionMenu
+import com.igor.finansee.ui.screens.AddExpenseScreen
+import com.igor.finansee.ui.screens.DonutChartScreen
 
 /*class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,7 +75,7 @@ class MainActivity : ComponentActivity() {
 
             val currentUser = userList.first()
 
-            FinanSeeTheme (darkTheme = isDarkTheme.value) {
+            FinanSeeTheme(darkTheme = isDarkTheme.value) {
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     gesturesEnabled = true,
@@ -88,7 +97,13 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             },
-                            bottomBar = { BottomNavigationBar(navController) }
+                            bottomBar = { BottomNavigationBar(navController) },
+                                    floatingActionButton = {
+                                Box(modifier = Modifier.offset(y = 55.dp)) {
+                                    CircularActionMenu(navController)
+                                }
+                            },
+                            floatingActionButtonPosition = FabPosition.Center,
                         ) { innerPadding ->
                             NavHost(
                                 navController = navController,
@@ -99,13 +114,21 @@ class MainActivity : ComponentActivity() {
                                 composable("profile") { ProfileScreen(navController, currentUser) }
                                 composable("add") { AddScreen(navController) }
                                 composable("plans") { PlansScreen(navController) }
-                                composable("transactions") { TransactionScreen(navController, currentUser) }
+                                composable("donutChart") { DonutChartScreen() }
+                                composable("add_expense") { AddExpenseScreen() }
+                                composable("transactions") {
+                                    TransactionScreen(
+                                        navController,
+                                        currentUser
+                                    )
+                                }
 
                                 composable("settings") {
                                     val context = LocalContext.current
                                     val repository = remember { UserPreferencesRepository(context) }
                                     val factory = remember { SettingsViewModelFactory(repository) }
-                                    val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
+                                    val settingsViewModel: SettingsViewModel =
+                                        viewModel(factory = factory)
 
                                     SettingsScreen(
                                         onNavigateBack = { navController.popBackStack() },
@@ -118,12 +141,13 @@ class MainActivity : ComponentActivity() {
                                     val context = LocalContext.current
                                     val repository = remember { UserPreferencesRepository(context) }
                                     val factory = remember { SettingsViewModelFactory(repository) }
-                                    val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
+                                    val settingsViewModel: SettingsViewModel =
+                                        viewModel(factory = factory)
 
                                     NotificationSettingsScreen(
                                         onNavigateBack = { navController.popBackStack() },
-                                        onNavigateToEmailSettings =  {navController.navigate("email_settings")},
-                                        onNavigateDailyReminder = {navController.navigate("daily_reminder")},
+                                        onNavigateToEmailSettings = { navController.navigate("email_settings") },
+                                        onNavigateDailyReminder = { navController.navigate("daily_reminder") },
                                         viewModel = settingsViewModel
                                     )
                                 }
@@ -132,7 +156,8 @@ class MainActivity : ComponentActivity() {
                                     val context = LocalContext.current
                                     val repository = remember { UserPreferencesRepository(context) }
                                     val factory = remember { SettingsViewModelFactory(repository) }
-                                    val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
+                                    val settingsViewModel: SettingsViewModel =
+                                        viewModel(factory = factory)
 
                                     EmailSettingsScreen(
                                         onNavigateBack = { navController.popBackStack() },
@@ -144,7 +169,8 @@ class MainActivity : ComponentActivity() {
                                     val context = LocalContext.current
                                     val repository = remember { UserPreferencesRepository(context) }
                                     val factory = remember { SettingsViewModelFactory(repository) }
-                                    val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
+                                    val settingsViewModel: SettingsViewModel =
+                                        viewModel(factory = factory)
 
                                     DailyReminderScreen(
                                         onNavigateBack = { navController.popBackStack() },

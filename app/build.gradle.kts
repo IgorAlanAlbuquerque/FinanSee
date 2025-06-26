@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
 }
 
 android {
@@ -40,6 +41,8 @@ android {
 }
 
 dependencies {
+    implementation("com.github.PhilJay:MPAndroidChart:3.1.0")
+    implementation("androidx.compose.foundation:foundation:1.6.1")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.work.runtime.ktx)
     androidTestImplementation(platform(libs.androidx.compose.bom))
