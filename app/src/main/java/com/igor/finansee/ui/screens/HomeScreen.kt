@@ -43,6 +43,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -67,36 +68,13 @@ import com.igor.finansee.data.models.CreditCard
 import com.igor.finansee.data.models.FaturaCreditCard
 import com.igor.finansee.data.models.MonthPlanning
 import com.igor.finansee.data.models.*
-import com.igor.finansee.ui.theme.BackgroundGray
-import com.igor.finansee.ui.theme.GreenSuccess
-import com.igor.finansee.ui.theme.LightPurple
-import com.igor.finansee.ui.theme.RedExpense
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.igor.finansee.ui.theme.*
 import com.igor.finansee.viewmodels.HomeScreenViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
-
-val pieChartColors = listOf(
-    Color(0xFFE91E63), // Pink
-    Color(0xFF673AB7), // Deep Purple
-    Color(0xFF2196F3), // Blue
-    Color(0xFF00BCD4), // Cyan
-    Color(0xFF8BC34A), // Light Green
-    Color(0xFFFFC107), // Amber
-    Color(0xFFFF5722), // Deep Orange
-    Color(0xFF9E9E9E), // Grey
-    Color(0xFF795548), // Brown
-    Color(0xFF607D8B)  // Blue Grey
-)
-val CardBackgroundColor = Color(0xFF2C2C2E)
-val TextColorPrimary = Color.White
-val TextColorSecondary = Color(0xFFAAAAAA)
-val ProgressBarExceededColor = Color(0xFFE74C3C)
-val ProgressBarNormalColor = Color(0xFF4A90E2)
-val IconBackgroundBlue = Color(0xFF4A90E2)
-val IconBackgroundRed = Color(0xFFE74C3C)
 
 data class CategoryWithAmount(
     val category: Category,
@@ -119,7 +97,7 @@ fun HomeScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundGray),
+            .background(MaterialTheme.colorScheme.background),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp)
@@ -241,8 +219,8 @@ fun IncomeExpenseSection(totalIncome: String, totalExpenses: String) {
             type = "Receitas",
             amount = totalIncome,
             icon = Icons.AutoMirrored.Outlined.TrendingUp,
-            iconTint = GreenSuccess,
-            amountColor = GreenSuccess
+            iconTint = Color.LightGray,
+            amountColor = Color.Green
         )
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -252,8 +230,8 @@ fun IncomeExpenseSection(totalIncome: String, totalExpenses: String) {
             type = "Despesas",
             amount = totalExpenses,
             icon = Icons.AutoMirrored.Outlined.TrendingDown,
-            iconTint = RedExpense,
-            amountColor = RedExpense
+            iconTint = Color.Red,
+            amountColor = Color.Red
         )
     }
 }
@@ -871,7 +849,7 @@ fun MonthPlan(
                         .padding(16.dp)
                         .fillMaxWidth(),
                     color = TextColorSecondary,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center
                 )
             }
         } else {

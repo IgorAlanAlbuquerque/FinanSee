@@ -7,11 +7,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.data.models.categoryList
-import com.igor.finansee.ui.theme.IconBgBlue
-import com.igor.finansee.ui.theme.IconBgGreen
-import com.igor.finansee.ui.theme.IconBgPurple
-import com.igor.finansee.ui.theme.IconBgRed
-
+import com.igor.finansee.ui.theme.*
 data class CategoryUIDetails(
     val name: String,
     val icon: ImageVector,
@@ -43,7 +39,7 @@ fun getCategoryUIDetails(
         }
         TransactionType.EXPENSE -> {
             displayName = categoryFromList?.name ?: "Despesa"
-            bgColor = CategoryColorsMap[categoryId] ?: IconBgRed
+            bgColor = CategoryColorsMap[categoryId] ?: IconBackgroundRed
             icon = when (categoryId) {
                 6 -> Icons.Filled.Restaurant
                 7 -> Icons.Filled.Home
@@ -62,7 +58,7 @@ fun getCategoryUIDetails(
         }
         TransactionType.CREDIT_CARD_EXPENSE -> {
             displayName = categoryFromList?.name ?: "Cartão"
-            bgColor = CategoryColorsMap[categoryId] ?: IconBgRed
+            bgColor = CategoryColorsMap[categoryId] ?: IconBackgroundRed
             icon = when (categoryId) {
                 6 -> Icons.Filled.Restaurant
                 11 -> Icons.Filled.SportsEsports
@@ -72,7 +68,7 @@ fun getCategoryUIDetails(
         }
         TransactionType.TRANSFER_IN -> {
             displayName = "Transferência Recebida"
-            bgColor = IconBgBlue  // mantém o que você já tinha
+            bgColor = IconBackgroundBlue  // mantém o que você já tinha
             icon = Icons.AutoMirrored.Filled.ArrowForward
         }
         TransactionType.TRANSFER_OUT -> {

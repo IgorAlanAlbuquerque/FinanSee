@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.sp
 import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.data.models.expenseList
 import com.igor.finansee.ui.components.DonutChart
-import com.igor.finansee.ui.theme.BackgroundGray
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -32,7 +31,7 @@ fun DonutChartScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundGray)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         Column(

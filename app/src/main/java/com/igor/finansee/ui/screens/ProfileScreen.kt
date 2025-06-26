@@ -31,12 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.igor.finansee.data.models.User
-import com.igor.finansee.ui.theme.IconColorLight
-import com.igor.finansee.ui.theme.LightCardBackgroundColor
-import com.igor.finansee.ui.theme.LightPurple
-import com.igor.finansee.ui.theme.LightScreenBackgroundColor
-import com.igor.finansee.ui.theme.TextPrimaryLight
-import com.igor.finansee.ui.theme.TextSecondaryLight
+import com.igor.finansee.ui.theme.*
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -50,7 +45,7 @@ fun ProfileScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(LightScreenBackgroundColor)
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

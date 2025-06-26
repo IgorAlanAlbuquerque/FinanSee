@@ -64,7 +64,7 @@ fun TransactionScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(LightCardBackgroundColor)
+            .background(MaterialTheme.colorScheme.background)
             .padding(top = 16.dp)
     ) {
         MonthSelector(

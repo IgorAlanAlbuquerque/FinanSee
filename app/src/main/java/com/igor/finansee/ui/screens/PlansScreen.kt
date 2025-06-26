@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.igor.finansee.ui.theme.BackgroundGray
 import com.igor.finansee.viewmodels.PlansScreenViewModel
 
 @Composable
@@ -38,7 +37,7 @@ fun PlansScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundGray)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
