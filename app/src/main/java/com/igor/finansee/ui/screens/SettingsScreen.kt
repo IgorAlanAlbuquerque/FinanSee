@@ -29,6 +29,7 @@ import com.igor.finansee.viewmodels.SettingsViewModel
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     viewModel: SettingsViewModel,
+    onNavigateToNotifications: () -> Unit,
 ) {
     val userPreferences by viewModel.uiState.collectAsState()
 

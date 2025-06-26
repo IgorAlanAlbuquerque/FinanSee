@@ -31,7 +31,7 @@ fun getCategoryUIDetails(
     when (transactionType) {
         TransactionType.INCOME -> {
             displayName = categoryFromList?.name ?: "Receita"
-            bgColor = IconBgGreen
+            bgColor = CategoryColorsMap[categoryId] ?: IconBgGreen
             icon = when (categoryId) {
                 1 -> Icons.Filled.MonetizationOn
                 2 -> Icons.Filled.Work
@@ -43,7 +43,7 @@ fun getCategoryUIDetails(
         }
         TransactionType.EXPENSE -> {
             displayName = categoryFromList?.name ?: "Despesa"
-            bgColor = IconBgRed
+            bgColor = CategoryColorsMap[categoryId] ?: IconBgRed
             icon = when (categoryId) {
                 6 -> Icons.Filled.Restaurant
                 7 -> Icons.Filled.Home
@@ -62,7 +62,7 @@ fun getCategoryUIDetails(
         }
         TransactionType.CREDIT_CARD_EXPENSE -> {
             displayName = categoryFromList?.name ?: "Cartão"
-            bgColor = IconBgRed
+            bgColor = CategoryColorsMap[categoryId] ?: IconBgRed
             icon = when (categoryId) {
                 6 -> Icons.Filled.Restaurant
                 11 -> Icons.Filled.SportsEsports
@@ -72,14 +72,15 @@ fun getCategoryUIDetails(
         }
         TransactionType.TRANSFER_IN -> {
             displayName = "Transferência Recebida"
+            bgColor = IconBgBlue  // mantém o que você já tinha
             icon = Icons.AutoMirrored.Filled.ArrowForward
-            bgColor = IconBgBlue
         }
         TransactionType.TRANSFER_OUT -> {
             displayName = "Transferência Enviada"
+            bgColor = IconBgPurple  // mantém o que você já tinha
             icon = Icons.AutoMirrored.Filled.ArrowBack
-            bgColor = IconBgPurple
         }
     }
+
     return CategoryUIDetails(displayName, icon, bgColor)
 }
