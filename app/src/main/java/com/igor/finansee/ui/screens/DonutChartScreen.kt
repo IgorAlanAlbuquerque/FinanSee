@@ -13,20 +13,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.models.TransactionType
-import com.igor.finansee.data.models.expenseList
 import com.igor.finansee.ui.components.DonutChart
+import com.igor.finansee.viewmodels.ExpenseScreenViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DonutChartScreen() {
-    var selectedMonth by remember { mutableStateOf(LocalDate.now().withDayOfMonth(1)) }
-
+fun DonutChartScreen(
+    viewModel: ExpenseScreenViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
     val formatter = DateTimeFormatter.ofPattern("MMMM yyyy")
 
-    val filteredExpenses = expenseList.filter { it.monthYear == selectedMonth }
+    LaunchedEffect(Unit) {
+        viewModel.loadInitialData()
+    }
 
     Box(
         modifier = Modifier
@@ -38,7 +42,7 @@ fun DonutChartScreen() {
             modifier = Modifier.fillMaxSize()
         ) {
             Text(
-                text = "Grafíco",
+                text = "Gráfico",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
@@ -48,29 +52,35 @@ fun DonutChartScreen() {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = {
-                    selectedMonth = selectedMonth.minusMonths(1)
-                }) {
+                IconButton(onClick = { viewModel.selectPreviousMonth() }) {
                     Icon(Icons.Filled.ChevronLeft, contentDescription = "Mês anterior", tint = Color.Black)
                 }
 
                 Text(
-                    text = selectedMonth.format(formatter).replaceFirstChar { it.uppercase() },
+                    text = uiState.selectedMonth.format(formatter).replaceFirstChar { it.uppercase() },
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.Black
                 )
 
-                IconButton(onClick = {
-                    selectedMonth = selectedMonth.plusMonths(1)
-                }) {
+                IconButton(onClick = { viewModel.selectNextMonth() }) {
                     Icon(Icons.Filled.ChevronRight, contentDescription = "Próximo mês", tint = Color.Black)
                 }
             }
+
+            if (uiState.isLoading) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Distribuição de despesas por categoria",
@@ -79,7 +89,7 @@ fun DonutChartScreen() {
             )
 
             DonutChart(
-                expenses = filteredExpenses,
+                expenses = uiState.expenses,
                 transactionType = TransactionType.EXPENSE,
                 modifier = Modifier
                     .fillMaxWidth()
