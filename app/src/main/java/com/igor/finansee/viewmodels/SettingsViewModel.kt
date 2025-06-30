@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.igor.finansee.data.datastore.ThemeOption
 import com.igor.finansee.data.datastore.UserPreferencesRepository
 import com.igor.finansee.data.datastore.UserPreferences
 import com.igor.finansee.data.notifications.NotificationScheduler
@@ -17,12 +18,12 @@ class SettingsViewModel(private val userPreferencesRepository: UserPreferencesRe
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = UserPreferences(false, true, true, true, false, true, true, true, true, true, -1, -1)
+            initialValue = UserPreferences(ThemeOption.SYSTEM, true, true, true, true, true, true, -1, -1, false)
         )
 
-    fun setDarkMode(isDarkMode: Boolean) {
+    fun setThemeOption(themeOption: ThemeOption) {
         viewModelScope.launch {
-            userPreferencesRepository.updateDarkMode(isDarkMode)
+            userPreferencesRepository.updateThemeOption(themeOption)
         }
     }
 
@@ -30,18 +31,6 @@ class SettingsViewModel(private val userPreferencesRepository: UserPreferencesRe
         viewModelScope.launch {
             userPreferencesRepository.updateAnimationsEnabled(enabled)
         }
-    }
-
-    fun setShowCalculator(enabled: Boolean) = viewModelScope.launch {
-        userPreferencesRepository.updateShowCalculator(enabled)
-    }
-
-    fun setShowAutocomplete(enabled: Boolean) = viewModelScope.launch {
-        userPreferencesRepository.updateShowAutocomplete(enabled)
-    }
-
-    fun setShowBudgetSummary(enabled: Boolean) = viewModelScope.launch {
-        userPreferencesRepository.updateShowBudgetSummary(enabled)
     }
 
     fun setAlertPendencies(enabled: Boolean) = viewModelScope.launch {
@@ -80,6 +69,10 @@ class SettingsViewModel(private val userPreferencesRepository: UserPreferencesRe
             userPreferencesRepository.updateDailyReminder(-1, -1)
             NotificationScheduler.cancelDailyReminder(context)
         }
+    }
+
+    fun setAppLockEnabled(enabled: Boolean) = viewModelScope.launch {
+        userPreferencesRepository.updateAppLockEnabled(enabled)
     }
 }
 

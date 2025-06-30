@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -13,30 +14,31 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
+enum class ThemeOption(val value: String) {
+    LIGHT("light"),
+    DARK("dark"),
+    SYSTEM("system")
+}
+
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
 
 data class UserPreferences(
-    val isDarkMode: Boolean,
+    val themeOption: ThemeOption,
     val areAnimationsEnabled: Boolean,
-    val showCalculator: Boolean,
-    val showAutocomplete: Boolean,
-    val showBudgetSummary: Boolean,
     val alertPendencies: Boolean,
     val receiveNews: Boolean,
     val receiveFinancialAlerts: Boolean,
     val receivePremiumInfo: Boolean,
     val receivePartnerOffers: Boolean,
     val dailyReminderHour: Int,
-    val dailyReminderMinute: Int
+    val dailyReminderMinute: Int,
+    val isAppLockEnabled: Boolean = false,
 )
 
 class UserPreferencesRepository(private val context: Context) {
     private object PreferencesKeys {
-        val IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
+        val THEME_OPTION = stringPreferencesKey("theme_option")
         val ARE_ANIMATIONS_ENABLED = booleanPreferencesKey("are_animations_enabled")
-        val SHOW_CALCULATOR = booleanPreferencesKey("show_calculator")
-        val SHOW_AUTOCOMPLETE = booleanPreferencesKey("show_autocomplete")
-        val SHOW_BUDGET_SUMMARY = booleanPreferencesKey("show_budget_summary")
         val ALERT_PENDENCIES = booleanPreferencesKey("alert_pendencies")
         val RECEIVE_NEWS = booleanPreferencesKey("receive_news")
         val RECEIVE_FINANCIAL_ALERTS = booleanPreferencesKey("receive_financial_alerts")
@@ -44,6 +46,7 @@ class UserPreferencesRepository(private val context: Context) {
         val RECEIVE_PARTNER_OFFERS = booleanPreferencesKey("receive_partner_offers")
         val DAILY_REMINDER_HOUR = intPreferencesKey("daily_reminder_hour")
         val DAILY_REMINDER_MINUTE = intPreferencesKey("daily_reminder_minute")
+        val IS_APP_LOCK_ENABLED = booleanPreferencesKey("is_app_lock_enabled")
     }
 
     val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data
@@ -55,11 +58,10 @@ class UserPreferencesRepository(private val context: Context) {
             }
         }
         .map { preferences ->
-            val isDarkMode = preferences[PreferencesKeys.IS_DARK_MODE] ?: false
+            val themeOption = ThemeOption.valueOf(
+                preferences[PreferencesKeys.THEME_OPTION] ?: ThemeOption.SYSTEM.name
+            )
             val areAnimationsEnabled = preferences[PreferencesKeys.ARE_ANIMATIONS_ENABLED] ?: true
-            val showCalculator = preferences[PreferencesKeys.SHOW_CALCULATOR] ?: true
-            val showAutocomplete = preferences[PreferencesKeys.SHOW_AUTOCOMPLETE] ?: true
-            val showBudgetSummary = preferences[PreferencesKeys.SHOW_BUDGET_SUMMARY] ?: false
             val alertPendencies = preferences[PreferencesKeys.ALERT_PENDENCIES] ?: true
             val receiveNews = preferences[PreferencesKeys.RECEIVE_NEWS] ?: true
             val receiveFinancialAlerts = preferences[PreferencesKeys.RECEIVE_FINANCIAL_ALERTS] ?: true
@@ -67,41 +69,30 @@ class UserPreferencesRepository(private val context: Context) {
             val receivePartnerOffers = preferences[PreferencesKeys.RECEIVE_PARTNER_OFFERS] ?: true
             val dailyReminderHour = preferences[PreferencesKeys.DAILY_REMINDER_HOUR] ?: -1
             val dailyReminderMinute = preferences[PreferencesKeys.DAILY_REMINDER_MINUTE] ?: -1
+            val isAppLockEnabled = preferences[PreferencesKeys.IS_APP_LOCK_ENABLED] ?: false
 
             UserPreferences(
-                isDarkMode = isDarkMode,
+                themeOption = themeOption,
                 areAnimationsEnabled = areAnimationsEnabled,
-                showCalculator = showCalculator,
-                showAutocomplete = showAutocomplete,
-                showBudgetSummary = showBudgetSummary,
                 alertPendencies = alertPendencies,
                 receiveNews = receiveNews,
                 receiveFinancialAlerts = receiveFinancialAlerts,
                 receivePremiumInfo = receivePremiumInfo,
                 receivePartnerOffers = receivePartnerOffers,
                 dailyReminderHour = dailyReminderHour,
-                dailyReminderMinute = dailyReminderMinute
+                dailyReminderMinute = dailyReminderMinute,
+                isAppLockEnabled = isAppLockEnabled
             )
         }
 
-    suspend fun updateDarkMode(isDarkMode: Boolean) {
-        context.dataStore.edit { it[PreferencesKeys.IS_DARK_MODE] = isDarkMode }
+    suspend fun updateThemeOption(themeOption: ThemeOption) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.THEME_OPTION] = themeOption.name
+        }
     }
 
     suspend fun updateAnimationsEnabled(areEnabled: Boolean) {
         context.dataStore.edit { it[PreferencesKeys.ARE_ANIMATIONS_ENABLED] = areEnabled }
-    }
-
-    suspend fun updateShowCalculator(show: Boolean) {
-        context.dataStore.edit { it[PreferencesKeys.SHOW_CALCULATOR] = show }
-    }
-
-    suspend fun updateShowAutocomplete(show: Boolean) {
-        context.dataStore.edit { it[PreferencesKeys.SHOW_AUTOCOMPLETE] = show }
-    }
-
-    suspend fun updateShowBudgetSummary(show: Boolean) {
-        context.dataStore.edit { it[PreferencesKeys.SHOW_BUDGET_SUMMARY] = show }
     }
 
     suspend fun updateAlertPendencies(showAlerts: Boolean) {
@@ -125,6 +116,12 @@ class UserPreferencesRepository(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.DAILY_REMINDER_HOUR] = hour
             preferences[PreferencesKeys.DAILY_REMINDER_MINUTE] = minute
+        }
+    }
+
+    suspend fun updateAppLockEnabled(isEnabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_APP_LOCK_ENABLED] = isEnabled
         }
     }
 }

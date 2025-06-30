@@ -17,6 +17,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.ui.components.DonutChart
 import com.igor.finansee.viewmodels.ExpenseScreenViewModel
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)

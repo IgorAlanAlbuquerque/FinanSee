@@ -19,7 +19,6 @@ import com.igor.finansee.data.datastore.UserPreferencesRepository
 import com.igor.finansee.ui.components.BottomNavigationBar
 import com.igor.finansee.ui.components.DrawerContent
 import com.igor.finansee.ui.components.TopBar
-import com.igor.finansee.ui.screens.AddScreen
 import com.igor.finansee.ui.screens.HomeScreen
 import com.igor.finansee.ui.screens.PlansScreen
 import com.igor.finansee.ui.screens.ProfileScreen
@@ -37,9 +36,11 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.ui.unit.dp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.DrawerValue
+import androidx.compose.runtime.collectAsState
 
 import androidx.compose.ui.Modifier
 import com.igor.finansee.ui.components.CircularActionMenu
@@ -68,14 +69,21 @@ import com.igor.finansee.ui.screens.EditExpenseScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val settingsViewModel: SettingsViewModel by viewModels {
+            SettingsViewModelFactory(UserPreferencesRepository(this))
+        }
+
         setContent {
+            val uiState by settingsViewModel.uiState.collectAsState()
             val navController = rememberNavController()
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val scope = rememberCoroutineScope()
             val isDarkTheme = remember { mutableStateOf(false) }
+
             val currentUser = userList.first()
 
-            FinanSeeTheme(darkTheme = isDarkTheme.value) {
+            FinanSeeTheme(selectedTheme = uiState.themeOption) {
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     gesturesEnabled = true,
@@ -118,6 +126,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                                 composable("add") { AddScreen(navController) }
+                                composable("profile") { ProfileScreen(navController, currentUser) }
                                 composable("plans") { PlansScreen(navController) }
                                 composable("donutChart") { DonutChartScreen() }
                                 composable("add_expense") { AddExpenseScreen() }
@@ -140,7 +149,6 @@ class MainActivity : ComponentActivity() {
 
                                     SettingsScreen(
                                         onNavigateBack = { navController.popBackStack() },
-                                        onNavigateToNotifications = { navController.navigate("notification_settings") },
                                         viewModel = settingsViewModel
                                     )
                                 }
