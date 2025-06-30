@@ -35,7 +35,6 @@ import com.igor.finansee.viewmodels.SettingsViewModel
 import com.igor.finansee.viewmodels.SettingsViewModelFactory
 import androidx.compose.material3.FabPosition
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
@@ -46,10 +45,7 @@ import androidx.compose.ui.Modifier
 import com.igor.finansee.ui.components.CircularActionMenu
 import com.igor.finansee.ui.screens.AddExpenseScreen
 import com.igor.finansee.ui.screens.DonutChartScreen
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import com.igor.finansee.navigation.NavAuth
+
 import com.igor.finansee.ui.screens.EditExpenseScreen
 
 /*class MainActivity : ComponentActivity() {
@@ -80,7 +76,6 @@ class MainActivity : ComponentActivity() {
             val currentUser = userList.first()
 
             FinanSeeTheme(darkTheme = isDarkTheme.value) {
-
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     gesturesEnabled = true,

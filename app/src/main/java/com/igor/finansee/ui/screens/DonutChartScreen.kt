@@ -16,11 +16,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.ui.components.DonutChart
-import com.igor.finansee.ui.theme.BackgroundGray
 import com.igor.finansee.viewmodels.ExpenseScreenViewModel
 import java.time.format.DateTimeFormatter
-import java.util.*
-import kotlin.collections.ArrayList
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DonutChartScreen(
@@ -29,7 +27,6 @@ fun DonutChartScreen(
     val uiState by viewModel.uiState.collectAsState()
     val formatter = DateTimeFormatter.ofPattern("MMMM yyyy")
 
-    // Carrega os dados iniciais uma vez
     LaunchedEffect(Unit) {
         viewModel.loadInitialData()
     }
@@ -37,7 +34,7 @@ fun DonutChartScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundGray)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         Column(
