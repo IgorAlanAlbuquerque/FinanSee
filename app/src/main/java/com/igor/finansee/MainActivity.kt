@@ -35,7 +35,7 @@ import com.igor.finansee.viewmodels.SettingsViewModel
 import com.igor.finansee.viewmodels.SettingsViewModelFactory
 import androidx.compose.material3.FabPosition
 import androidx.compose.ui.unit.dp
-
+import androidx.compose.material3.MaterialTheme
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
@@ -46,6 +46,11 @@ import androidx.compose.ui.Modifier
 import com.igor.finansee.ui.components.CircularActionMenu
 import com.igor.finansee.ui.screens.AddExpenseScreen
 import com.igor.finansee.ui.screens.DonutChartScreen
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import com.igor.finansee.navigation.NavAuth
+import com.igor.finansee.ui.screens.EditExpenseScreen
 
 /*class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,10 +77,10 @@ class MainActivity : ComponentActivity() {
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val scope = rememberCoroutineScope()
             val isDarkTheme = remember { mutableStateOf(false) }
-
             val currentUser = userList.first()
 
             FinanSeeTheme(darkTheme = isDarkTheme.value) {
+
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     gesturesEnabled = true,
@@ -98,7 +103,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             },
                             bottomBar = { BottomNavigationBar(navController) },
-                                    floatingActionButton = {
+                            floatingActionButton = {
                                 Box(modifier = Modifier.offset(y = 55.dp)) {
                                     CircularActionMenu(navController)
                                 }
@@ -111,11 +116,17 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding)
                             ) {
                                 composable("home") { HomeScreen(navController, currentUser) }
-                                composable("profile") { ProfileScreen(navController, currentUser) }
+                                composable("profile") {
+                                    ProfileScreen(
+                                        navController,
+                                        currentUser
+                                    )
+                                }
                                 composable("add") { AddScreen(navController) }
                                 composable("plans") { PlansScreen(navController) }
                                 composable("donutChart") { DonutChartScreen() }
                                 composable("add_expense") { AddExpenseScreen() }
+                                composable("edit_expense") { EditExpenseScreen() }
                                 composable("transactions") {
                                     TransactionScreen(
                                         navController,
@@ -125,8 +136,10 @@ class MainActivity : ComponentActivity() {
 
                                 composable("settings") {
                                     val context = LocalContext.current
-                                    val repository = remember { UserPreferencesRepository(context) }
-                                    val factory = remember { SettingsViewModelFactory(repository) }
+                                    val repository =
+                                        remember { UserPreferencesRepository(context) }
+                                    val factory =
+                                        remember { SettingsViewModelFactory(repository) }
                                     val settingsViewModel: SettingsViewModel =
                                         viewModel(factory = factory)
 
@@ -139,8 +152,10 @@ class MainActivity : ComponentActivity() {
 
                                 composable("notification_settings") {
                                     val context = LocalContext.current
-                                    val repository = remember { UserPreferencesRepository(context) }
-                                    val factory = remember { SettingsViewModelFactory(repository) }
+                                    val repository =
+                                        remember { UserPreferencesRepository(context) }
+                                    val factory =
+                                        remember { SettingsViewModelFactory(repository) }
                                     val settingsViewModel: SettingsViewModel =
                                         viewModel(factory = factory)
 
@@ -154,8 +169,10 @@ class MainActivity : ComponentActivity() {
 
                                 composable("email_settings") {
                                     val context = LocalContext.current
-                                    val repository = remember { UserPreferencesRepository(context) }
-                                    val factory = remember { SettingsViewModelFactory(repository) }
+                                    val repository =
+                                        remember { UserPreferencesRepository(context) }
+                                    val factory =
+                                        remember { SettingsViewModelFactory(repository) }
                                     val settingsViewModel: SettingsViewModel =
                                         viewModel(factory = factory)
 
@@ -167,8 +184,10 @@ class MainActivity : ComponentActivity() {
 
                                 composable("daily_reminder") {
                                     val context = LocalContext.current
-                                    val repository = remember { UserPreferencesRepository(context) }
-                                    val factory = remember { SettingsViewModelFactory(repository) }
+                                    val repository =
+                                        remember { UserPreferencesRepository(context) }
+                                    val factory =
+                                        remember { SettingsViewModelFactory(repository) }
                                     val settingsViewModel: SettingsViewModel =
                                         viewModel(factory = factory)
 
