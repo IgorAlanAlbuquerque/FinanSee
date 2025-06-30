@@ -21,7 +21,6 @@ fun BottomNavigationBar(navController: NavHostController) {
             Triple("transactions", "Transactions", Icons.Default.SwapVert)
         )
 
-        // Primeira metade dos botões
         itemsParte1.forEach { (rota, label, icon) ->
             NavigationBarItem(
                 icon = { Icon(icon, contentDescription = label) },
@@ -38,7 +37,6 @@ fun BottomNavigationBar(navController: NavHostController) {
             enabled = false
         )
 
-        // Segunda metade dos botões
         itemsParte2.forEach { (rota, label, icon) ->
             NavigationBarItem(
                 icon = { Icon(icon, contentDescription = label) },

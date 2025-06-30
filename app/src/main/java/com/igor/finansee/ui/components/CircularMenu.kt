@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
+import androidx.compose.material.icons.filled.Edit
 import com.igor.finansee.data.models.CircularMenuItem
 
 @Composable
@@ -21,8 +22,8 @@ fun CircularActionMenu(navController: NavController) {
     var isMenuOpen by remember { mutableStateOf(false) }
 
     val menuItems = listOf(
-        CircularMenuItem(Icons.Default.TrendingUp, Color(0xFF1ABC9C), "Receita") {
-            println("Clicou em Nova Receita")
+        CircularMenuItem(Icons.Default.Edit, Color(0xFF1ABC9C), "Editar Despesas") {
+            navController.navigate("edit_expense")
         },
         CircularMenuItem(Icons.Default.TrendingDown, Color(0xFFE74C3C), "Despesa") {
             navController.navigate("add_expense")
