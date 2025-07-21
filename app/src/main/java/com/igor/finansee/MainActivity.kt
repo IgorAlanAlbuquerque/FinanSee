@@ -79,7 +79,6 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val scope = rememberCoroutineScope()
-            val isDarkTheme = remember { mutableStateOf(false) }
 
             val currentUser = userList.first()
 
@@ -125,7 +124,6 @@ class MainActivity : ComponentActivity() {
                                         currentUser
                                     )
                                 }
-                                composable("add") { AddScreen(navController) }
                                 composable("profile") { ProfileScreen(navController, currentUser) }
                                 composable("plans") { PlansScreen(navController) }
                                 composable("donutChart") { DonutChartScreen() }
@@ -133,7 +131,6 @@ class MainActivity : ComponentActivity() {
                                 composable("edit_expense") { EditExpenseScreen() }
                                 composable("transactions") {
                                     TransactionScreen(
-                                        navController,
                                         currentUser
                                     )
                                 }

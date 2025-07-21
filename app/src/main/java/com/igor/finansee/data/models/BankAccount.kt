@@ -1,7 +1,12 @@
 package com.igor.finansee.data.models
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "bank_accounts")
 data class BankAccount(
-    val id: Int,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
     val userId: Int,
     val name: String,
     val type: String,

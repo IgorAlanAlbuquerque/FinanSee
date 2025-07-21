@@ -2,78 +2,80 @@ package com.igor.finansee.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.igor.finansee.data.daos.BankAccountDao
+import com.igor.finansee.data.daos.TransactionDao
 import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.data.models.User
-import com.igor.finansee.data.models.bankAccountList
-import com.igor.finansee.data.models.transactionList
 import com.igor.finansee.data.states.TransactionScreenUiState
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
 
-class TransactionScreenViewModel : ViewModel() {
+@OptIn(ExperimentalCoroutinesApi::class)
+class TransactionScreenViewModel(
+    private val transactionDao: TransactionDao,
+    private val bankAccountDao: BankAccountDao,
+    private val currentUser: User
+) : ViewModel() {
+    private val _selectedMonth = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
 
-    private val _uiState = MutableStateFlow(TransactionScreenUiState())
-    val uiState: StateFlow<TransactionScreenUiState> = _uiState.asStateFlow()
+    private val _monthlyDataFlow = _selectedMonth.flatMapLatest { month ->
+        val startDate = month
+        val endDate = month.plusMonths(1)
+        val incomeTypes = listOf(TransactionType.INCOME, TransactionType.TRANSFER_IN)
+        val expenseTypes = listOf(
+            TransactionType.EXPENSE,
+            TransactionType.TRANSFER_OUT,
+            TransactionType.CREDIT_CARD_EXPENSE
+        )
 
-    private lateinit var currentUser: User
-
-    private val allTransactions = transactionList
-    private val allBankAccounts = bankAccountList
-
-    fun loadInitialData(user: User) {
-        this.currentUser = user
-        updateDataForSelectedMonth()
+        combine(
+            transactionDao.getTransactionsForPeriod(currentUser.id, startDate, endDate),
+            transactionDao.getSumByTypesForPeriod(currentUser.id, incomeTypes, startDate, endDate),
+            transactionDao.getSumByTypesForPeriod(currentUser.id, expenseTypes, startDate, endDate)
+        ) { transactions, income, expenses ->
+            MonthlyData(
+                transactions = transactions,
+                totalIncome = income ?: 0.0,
+                totalExpenses = expenses ?: 0.0
+            )
+        }
     }
 
+    val uiState: StateFlow<TransactionScreenUiState> = combine(
+        bankAccountDao.getOverallBalanceForUser(currentUser.id),
+        _monthlyDataFlow,
+        _selectedMonth
+    ) { overallBalance, monthlyData, month ->
+        TransactionScreenUiState(
+            isLoading = false,
+            selectedMonth = month,
+            currentOverallBalance = overallBalance ?: 0.0,
+            monthlyBalance = monthlyData.totalIncome - monthlyData.totalExpenses,
+            transactionsByDate = monthlyData.transactions.groupBy { it.date }
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = TransactionScreenUiState(isLoading = true, selectedMonth = LocalDate.now())
+    )
+
     fun selectNextMonth() {
-        _uiState.update { it.copy(selectedMonth = it.selectedMonth.plusMonths(1)) }
-        updateDataForSelectedMonth()
+        _selectedMonth.value = _selectedMonth.value.plusMonths(1)
     }
 
     fun selectPreviousMonth() {
-        _uiState.update { it.copy(selectedMonth = it.selectedMonth.minusMonths(1)) }
-        updateDataForSelectedMonth()
+        _selectedMonth.value = _selectedMonth.value.minusMonths(1)
     }
 
-    private fun updateDataForSelectedMonth() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-
-            val month = _uiState.value.selectedMonth
-
-            val overallBalance = allBankAccounts
-                .filter { it.userId == currentUser.id }
-                .sumOf { it.currentBalance }
-
-            val userTransactionsForMonth = allTransactions
-                .filter {
-                    it.userId == currentUser.id &&
-                            it.date.year == month.year &&
-                            it.date.month == month.month
-                }
-                .sortedByDescending { it.date }
-
-            val transactionsByDate = userTransactionsForMonth.groupBy { it.date }
-
-            val income = userTransactionsForMonth
-                .filter { it.type == TransactionType.INCOME || it.type == TransactionType.TRANSFER_IN }
-                .sumOf { it.value }
-            val expenses = userTransactionsForMonth
-                .filter { it.type == TransactionType.EXPENSE || it.type == TransactionType.TRANSFER_OUT || it.type == TransactionType.CREDIT_CARD_EXPENSE }
-                .sumOf { it.value }
-            val monthlyBalance = income - expenses
-
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    currentOverallBalance = overallBalance,
-                    monthlyBalance = monthlyBalance,
-                    transactionsByDate = transactionsByDate
-                )
-            }
-        }
-    }
+    private data class MonthlyData(
+        val transactions: List<com.igor.finansee.data.models.Transaction>,
+        val totalIncome: Double,
+        val totalExpenses: Double
+    )
 }

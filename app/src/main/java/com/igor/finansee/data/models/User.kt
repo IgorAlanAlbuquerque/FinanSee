@@ -1,10 +1,14 @@
 package com.igor.finansee.data.models
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.igor.finansee.R
 import java.time.LocalDate
 
+@Entity(tableName = "user")
 data class User(
-    val id: Int,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
     val email: String,
     val name: String,
     val registrationDate: LocalDate,

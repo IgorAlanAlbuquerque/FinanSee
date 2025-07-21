@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
 import com.igor.finansee.data.models.User
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -32,10 +31,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.igor.finansee.data.AppDatabase
 import com.igor.finansee.data.models.Transaction
 import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.ui.components.formatDateHeader
@@ -43,23 +43,29 @@ import com.igor.finansee.ui.theme.AmountGreenTransactions
 import com.igor.finansee.ui.theme.AmountRedTransactions
 import com.igor.finansee.ui.theme.CardBackgroundTransactions
 import com.igor.finansee.ui.components.getCategoryUIDetails
-import com.igor.finansee.ui.theme.LightCardBackgroundColor
 import com.igor.finansee.ui.theme.TextPrimaryLight
 import com.igor.finansee.ui.theme.TextSecondaryLight
 import com.igor.finansee.viewmodels.TransactionScreenViewModel
+import com.igor.finansee.viewmodels.TransactionScreenViewModelFactory
 
 @Composable
 fun TransactionScreen(
-    navController: NavHostController,
     currentUser: User,
-    modifier: Modifier = Modifier,
-    viewModel: TransactionScreenViewModel = viewModel()
+    modifier: Modifier = Modifier
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val transactionDao = AppDatabase.getDatabase(context).transactionDao()
+    val bankAccountDao = AppDatabase.getDatabase(context).bankAccountDao()
 
-    LaunchedEffect(key1 = currentUser) {
-        viewModel.loadInitialData(currentUser)
-    }
+    val factory = TransactionScreenViewModelFactory(
+        transactionDao = transactionDao,
+        bankAccountDao = bankAccountDao,
+        user = currentUser
+    )
+
+    val viewModel: TransactionScreenViewModel = viewModel(factory = factory)
+
+    val uiState by viewModel.uiState.collectAsState()
 
     Column(
         modifier = modifier
@@ -68,7 +74,7 @@ fun TransactionScreen(
             .padding(top = 16.dp)
     ) {
         MonthSelector(
-            currentMonth = uiState.selectedMonth,
+            currentMonth = YearMonth.from(uiState.selectedMonth),
             onPreviousMonth = { viewModel.selectPreviousMonth() },
             onNextMonth = { viewModel.selectNextMonth() }
         )
