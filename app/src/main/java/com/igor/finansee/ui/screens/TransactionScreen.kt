@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.AppDatabase
+import com.igor.finansee.data.models.Category
 import com.igor.finansee.data.models.Transaction
 import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.ui.components.formatDateHeader
@@ -54,18 +55,19 @@ fun TransactionScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val transactionDao = AppDatabase.getDatabase(context).transactionDao()
-    val bankAccountDao = AppDatabase.getDatabase(context).bankAccountDao()
-
+    val db = AppDatabase.getDatabase(context)
     val factory = TransactionScreenViewModelFactory(
-        transactionDao = transactionDao,
-        bankAccountDao = bankAccountDao,
+        transactionDao = db.transactionDao(),
+        bankAccountDao = db.bankAccountDao(),
+        categoryDao = db.categoryDao(),
         user = currentUser
     )
 
     val viewModel: TransactionScreenViewModel = viewModel(factory = factory)
 
     val uiState by viewModel.uiState.collectAsState()
+
+    val allCategories by viewModel.allCategories.collectAsState()
 
     Column(
         modifier = modifier
@@ -106,7 +108,7 @@ fun TransactionScreen(
                         TransactionDateHeader(date = formatDateHeader(date))
                     }
                     items(transactionsInGroup, key = { it.id }) { transaction ->
-                        TransactionItemRow(transaction = transaction)
+                        TransactionItemRow(transaction = transaction, allCategories)
                     }
                 }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -220,8 +222,8 @@ fun TransactionDateHeader(date: String) {
 
 
 @Composable
-fun TransactionItemRow(transaction: Transaction) {
-    val categoryDetails = getCategoryUIDetails(transaction.type, transaction.categoryId)
+fun TransactionItemRow(transaction: Transaction, allCategories: List<Category>) {
+    val categoryDetails = getCategoryUIDetails(transaction.type, transaction.categoryId, allCategories)
     val amountColor = when (transaction.type) {
         TransactionType.INCOME, TransactionType.TRANSFER_IN -> AmountGreenTransactions
         TransactionType.EXPENSE, TransactionType.TRANSFER_OUT, TransactionType.CREDIT_CARD_EXPENSE -> AmountRedTransactions

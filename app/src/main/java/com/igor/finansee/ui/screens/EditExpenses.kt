@@ -157,7 +157,6 @@ fun EditExpenseScreen() {
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                val categoryList = com.igor.finansee.data.models.categoryList
                 Button(onClick = {
                     val dataLocalDate = try {
                         LocalDate.parse(data)
@@ -165,14 +164,12 @@ fun EditExpenseScreen() {
                         null
                     }
 
-                    val selectedCategory = categoryList.find { it.name == categoriaSelecionada?.name }
-
-                    if (dataLocalDate != null && selectedCategory != null) {
+                    if (dataLocalDate != null && categoriaSelecionada != null) {
                         viewModel.updateExpense(
                             editingExpenseId!!,
                             descricao,
                             valor.toDoubleOrNull() ?: 0.0,
-                            selectedCategory,
+                            categoriaSelecionada!!,
                             dataLocalDate
                         )
                         editingExpenseId = null
@@ -184,8 +181,8 @@ fun EditExpenseScreen() {
                 Button(onClick = {
                     viewModel.deleteExpense(editingExpenseId!!)
                     editingExpenseId = null
-                }) {
-                    Text("Excluir", color = MaterialTheme.colorScheme.error)
+                }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
+                    Text("Excluir")
                 }
             }
         }

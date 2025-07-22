@@ -22,8 +22,8 @@ fun DailyReminderScreen(
 ) {
     val context = LocalContext.current
 
-    var selectedHour by remember { mutableStateOf(17) }
-    var selectedMinute by remember { mutableStateOf(0) }
+    var selectedHour by remember { mutableIntStateOf(17) }
+    var selectedMinute by remember { mutableIntStateOf(0) }
 
     val timePickerDialog = TimePickerDialog(
         context,

@@ -125,15 +125,11 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                                 composable("profile") { ProfileScreen(navController, currentUser) }
-                                composable("plans") { PlansScreen(navController) }
+                                composable("plans") { PlansScreen(currentUser) }
                                 composable("donutChart") { DonutChartScreen() }
                                 composable("add_expense") { AddExpenseScreen(navController) }
                                 composable("edit_expense") { EditExpenseScreen() }
-                                composable("transactions") {
-                                    TransactionScreen(
-                                        currentUser
-                                    )
-                                }
+                                composable("transactions") { TransactionScreen(currentUser) }
 
                                 composable("settings") {
                                     val context = LocalContext.current

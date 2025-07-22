@@ -2,62 +2,49 @@ package com.igor.finansee.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.igor.finansee.data.daos.MonthPlanningDao
+import com.igor.finansee.data.daos.TransactionDao
 import com.igor.finansee.data.models.TransactionType
-import com.igor.finansee.data.models.mockMonthPlanningList
-import com.igor.finansee.data.models.transactionList
+import com.igor.finansee.data.models.User
 import com.igor.finansee.data.states.CategoryPlanWithProgress
 import com.igor.finansee.data.states.PlansScreenUiState
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
-class PlansScreenViewModel : ViewModel() {
+@OptIn(ExperimentalCoroutinesApi::class)
+class PlansScreenViewModel(
+    private val planningDao: MonthPlanningDao,
+    private val transactionDao: TransactionDao,
+    private val currentUser: User
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PlansScreenUiState())
-    val uiState: StateFlow<PlansScreenUiState> = _uiState.asStateFlow()
+    private val _selectedDate = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
 
-    fun loadInitialData(userId: Int = 1) {
-        updateData(userId)
-    }
+    private val expenseTypes = listOf(TransactionType.EXPENSE, TransactionType.CREDIT_CARD_EXPENSE)
 
-    fun selectNextMonth() {
-        _uiState.update { it.copy(selectedDate = it.selectedDate.plusMonths(1)) }
-        updateData()
-    }
+    val uiState: StateFlow<PlansScreenUiState> = _selectedDate.flatMapLatest { date ->
+        val startDate = date
+        val endDate = date.plusMonths(1)
 
-    fun selectPreviousMonth() {
-        _uiState.update { it.copy(selectedDate = it.selectedDate.minusMonths(1)) }
-        updateData()
-    }
-
-    private fun updateData(userId: Int = 1) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-
-            val date = _uiState.value.selectedDate
-
-            val planning = mockMonthPlanningList.find {
-                it.monthYear.month == date.month && it.monthYear.year == date.year
-            }
+        combine(
+            planningDao.getPlanningForUserInPeriod(currentUser.id, startDate, endDate),
+            transactionDao.getExpensesGroupedByCategory(currentUser.id, startDate, endDate, expenseTypes)
+        ) { planning, actualSpendingResults ->
 
             var planDetails = listOf<CategoryPlanWithProgress>()
-            var totalPlanned = 0.0
 
             if (planning != null) {
-                totalPlanned = planning.categorySpendingPlan.sumOf { it.plannedAmount }
                 planDetails = planning.categorySpendingPlan.map { categoryPlan ->
-                    val actualSpending = transactionList
-                        .filter { t ->
-                            t.userId == userId &&
-                                    t.date.year == date.year &&
-                                    t.date.month == date.month &&
-                                    t.categoryId == categoryPlan.categoryId &&
-                                    (t.type == TransactionType.EXPENSE || t.type == TransactionType.CREDIT_CARD_EXPENSE)
-                        }.sumOf { it.value }
+                    val actualSpending = actualSpendingResults
+                        .find { it.categoryId == categoryPlan.categoryId }?.totalAmount ?: 0.0
 
                     val progress = if (categoryPlan.plannedAmount > 0) {
                         (actualSpending / categoryPlan.plannedAmount).toFloat()
@@ -74,17 +61,28 @@ class PlansScreenViewModel : ViewModel() {
             }
 
             val monthDisplayName = date.month.getDisplayName(TextStyle.FULL, Locale("pt", "BR"))
-                .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("pt", "BR")) else it.toString() } + " " + date.year
+                .replaceFirstChar { it.titlecase(Locale("pt", "BR")) } + " " + date.year
 
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    monthDisplayName = monthDisplayName,
-                    currentPlanning = planning,
-                    totalPlannedAmount = totalPlanned,
-                    planDetailsWithProgress = planDetails
-                )
-            }
+            PlansScreenUiState(
+                isLoading = false,
+                selectedDate = date,
+                monthDisplayName = monthDisplayName,
+                currentPlanning = planning,
+                totalPlannedAmount = planning?.categorySpendingPlan?.sumOf { it.plannedAmount } ?: 0.0,
+                planDetailsWithProgress = planDetails
+            )
         }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = PlansScreenUiState(isLoading = true)
+    )
+
+    fun selectNextMonth() {
+        _selectedDate.value = _selectedDate.value.plusMonths(1)
+    }
+
+    fun selectPreviousMonth() {
+        _selectedDate.value = _selectedDate.value.minusMonths(1)
     }
 }

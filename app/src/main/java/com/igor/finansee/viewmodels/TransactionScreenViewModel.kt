@@ -3,7 +3,9 @@ package com.igor.finansee.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.igor.finansee.data.daos.BankAccountDao
+import com.igor.finansee.data.daos.CategoryDao
 import com.igor.finansee.data.daos.TransactionDao
+import com.igor.finansee.data.models.Category
 import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.data.models.User
 import com.igor.finansee.data.states.TransactionScreenUiState
@@ -20,6 +22,7 @@ import java.time.LocalDate
 class TransactionScreenViewModel(
     private val transactionDao: TransactionDao,
     private val bankAccountDao: BankAccountDao,
+    private val categoryDao: CategoryDao,
     private val currentUser: User
 ) : ViewModel() {
     private val _selectedMonth = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
@@ -64,6 +67,13 @@ class TransactionScreenViewModel(
         started = SharingStarted.WhileSubscribed(5000L),
         initialValue = TransactionScreenUiState(isLoading = true, selectedMonth = LocalDate.now())
     )
+
+    val allCategories: StateFlow<List<Category>> = categoryDao.getAllCategories()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L),
+            initialValue = emptyList()
+        )
 
     fun selectNextMonth() {
         _selectedMonth.value = _selectedMonth.value.plusMonths(1)

@@ -10,27 +10,30 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.igor.finansee.data.AppDatabase
 import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.ui.components.DonutChart
 import com.igor.finansee.viewmodels.ExpenseScreenViewModel
-import java.time.LocalDate
+import com.igor.finansee.viewmodels.ExpenseScreenViewModelFactory
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DonutChartScreen(
-    viewModel: ExpenseScreenViewModel = viewModel()
-) {
-    val uiState by viewModel.uiState.collectAsState()
-    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy")
+fun DonutChartScreen() {
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val factory = ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao())
+    val viewModel: ExpenseScreenViewModel = viewModel(factory = factory)
 
-    LaunchedEffect(Unit) {
-        viewModel.loadInitialData()
-    }
+    val uiState by viewModel.uiState.collectAsState()
+    val allCategories by viewModel.categories.collectAsState()
+
+    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy")
 
     Box(
         modifier = Modifier
@@ -90,6 +93,7 @@ fun DonutChartScreen(
 
             DonutChart(
                 expenses = uiState.expenses,
+                allCategories = allCategories,
                 transactionType = TransactionType.EXPENSE,
                 modifier = Modifier
                     .fillMaxWidth()

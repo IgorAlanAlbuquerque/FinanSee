@@ -16,23 +16,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
+import com.igor.finansee.data.AppDatabase
+import com.igor.finansee.data.models.User
 import com.igor.finansee.viewmodels.PlansScreenViewModel
+import com.igor.finansee.viewmodels.PlansScreenViewModelFactory
 
 @Composable
 fun PlansScreen(
-    navController: NavHostController,
-    viewModel: PlansScreenViewModel = viewModel()
+    currentUser: User
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val factory = PlansScreenViewModelFactory(
+        planningDao = db.monthPlanningDao(),
+        transactionDao = db.transactionDao(),
+        user = currentUser
+    )
+    val viewModel: PlansScreenViewModel = viewModel(factory = factory)
 
-    LaunchedEffect(Unit) {
-        viewModel.loadInitialData()
-    }
+    val uiState by viewModel.uiState.collectAsState()
 
     Box(
         modifier = Modifier

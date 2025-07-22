@@ -67,9 +67,9 @@ import com.igor.finansee.data.models.Category
 import com.igor.finansee.data.models.CreditCard
 import com.igor.finansee.data.models.FaturaCreditCard
 import com.igor.finansee.data.models.MonthPlanning
-import com.igor.finansee.data.models.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.AppDatabase
+import com.igor.finansee.data.models.User
 import com.igor.finansee.ui.theme.*
 import com.igor.finansee.viewmodels.HomeScreenViewModel
 import com.igor.finansee.viewmodels.HomeScreenViewModelFactory

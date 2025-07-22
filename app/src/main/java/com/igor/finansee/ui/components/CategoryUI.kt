@@ -5,8 +5,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.igor.finansee.data.models.Category
 import com.igor.finansee.data.models.TransactionType
-import com.igor.finansee.data.models.categoryList
 import com.igor.finansee.ui.theme.*
 data class CategoryUIDetails(
     val name: String,
@@ -16,9 +16,10 @@ data class CategoryUIDetails(
 
 fun getCategoryUIDetails(
     transactionType: TransactionType,
-    categoryId: Int
+    categoryId: Int,
+    allCategories: List<Category>
 ): CategoryUIDetails {
-    val categoryFromList = categoryList.find { it.id == categoryId }
+    val categoryFromList = allCategories.find { it.id == categoryId }
 
     val displayName: String
     val icon: ImageVector
