@@ -1,7 +1,13 @@
 package com.igor.finansee.data.daos
 
 import androidx.room.Dao
+import androidx.room.Query
+import com.igor.finansee.data.models.MonthPlanning
+import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 @Dao
 interface MonthPlanningDao {
+    @Query("SELECT * FROM month_planning WHERE userId = :userId AND monthYear >= :startDate AND monthYear < :endDate LIMIT 1")
+    fun getPlanningForUserInPeriod(userId: Int, startDate: LocalDate, endDate: LocalDate): Flow<MonthPlanning?>
 }

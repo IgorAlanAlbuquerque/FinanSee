@@ -127,7 +127,7 @@ class MainActivity : ComponentActivity() {
                                 composable("profile") { ProfileScreen(navController, currentUser) }
                                 composable("plans") { PlansScreen(navController) }
                                 composable("donutChart") { DonutChartScreen() }
-                                composable("add_expense") { AddExpenseScreen() }
+                                composable("add_expense") { AddExpenseScreen(navController) }
                                 composable("edit_expense") { EditExpenseScreen() }
                                 composable("transactions") {
                                     TransactionScreen(

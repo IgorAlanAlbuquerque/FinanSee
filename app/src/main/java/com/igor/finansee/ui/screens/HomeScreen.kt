@@ -37,7 +37,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -59,6 +58,7 @@ import androidx.navigation.NavHostController
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
@@ -69,8 +69,10 @@ import com.igor.finansee.data.models.FaturaCreditCard
 import com.igor.finansee.data.models.MonthPlanning
 import com.igor.finansee.data.models.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.igor.finansee.data.AppDatabase
 import com.igor.finansee.ui.theme.*
 import com.igor.finansee.viewmodels.HomeScreenViewModel
+import com.igor.finansee.viewmodels.HomeScreenViewModelFactory
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -86,13 +88,29 @@ data class CategoryWithAmount(
 fun HomeScreen(
     navController: NavHostController,
     currentUser: User,
-    viewModel: HomeScreenViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val bankAccountDao = db.bankAccountDao()
+    val creditCardDao = db.creditCardDao()
+    val faturaDao = db.faturaCreditCardDao()
+    val transactionDao = db.transactionDao()
+    val planningDao = db.monthPlanningDao()
+    val categoryDao = db.categoryDao()
 
-    LaunchedEffect(key1 = currentUser) {
-        viewModel.loadInitialData(currentUser)
-    }
+    val factory = HomeScreenViewModelFactory(
+        bankAccountDao = bankAccountDao,
+        creditCardDao = creditCardDao,
+        faturaDao = faturaDao,
+        transactionDao = transactionDao,
+        planningDao = planningDao,
+        categoryDao = categoryDao,
+        user = currentUser
+    )
+
+    val viewModel: HomeScreenViewModel = viewModel(factory = factory)
+
+    val uiState by viewModel.uiState.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -907,12 +925,11 @@ fun getIconForCategory(categoryId: Int): ImageVector {
 }
 
 fun getIconBgColorForCategory(categoryId: Int, isExceeded: Boolean): Color {
-    if (isExceeded) return IconBackgroundRed // Se excedeu, pode ser vermelho
+    if (isExceeded) return IconBackgroundRed
     return when (categoryId) {
-        6 -> IconBackgroundRed // Alimentação (geralmente vermelho no exemplo)
-        14 -> IconBackgroundBlue // Assinaturas (azul no exemplo)
-        // Adicione mais cores específicas baseadas nos seus designs
-        else -> IconBackgroundBlue.copy(alpha = 0.7f) // Um azul padrão para outros
+        6 -> IconBackgroundRed
+        14 -> IconBackgroundBlue
+        else -> IconBackgroundBlue.copy(alpha = 0.7f)
     }
 }
 

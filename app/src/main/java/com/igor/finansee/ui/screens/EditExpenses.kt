@@ -4,34 +4,46 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.models.*
 import com.igor.finansee.viewmodels.ExpenseScreenViewModel
 import java.util.UUID
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.igor.finansee.data.AppDatabase
+import com.igor.finansee.viewmodels.ExpenseScreenViewModelFactory
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditExpenseScreen(
-    viewModel: ExpenseScreenViewModel = viewModel()
-) {
+fun EditExpenseScreen() {
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val factory = ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao())
+    val viewModel: ExpenseScreenViewModel = viewModel(factory = factory)
+
     val uiState by viewModel.uiState.collectAsState()
+    val categoryList by viewModel.categories.collectAsState()
+
     val expensesForMonth = uiState.expenses
     var editingExpenseId by remember { mutableStateOf<UUID?>(null) }
+
     var descricao by remember { mutableStateOf("") }
     var valor by remember { mutableStateOf("") }
-    var categoria by remember { mutableStateOf("") }
+    var categoriaSelecionada by remember { mutableStateOf<Category?>(null) }
     var data by remember { mutableStateOf("") }
+    var expandedCategoryDropdown by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
 
@@ -39,7 +51,7 @@ fun EditExpenseScreen(
         editingExpenseId = expense.id
         descricao = expense.descricao
         valor = expense.valor.toString()
-        categoria = expense.categoria.name
+        categoriaSelecionada = expense.categoria
         data = expense.data.toString()
     }
 
@@ -50,7 +62,6 @@ fun EditExpenseScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Linha para navegação entre meses
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -63,7 +74,9 @@ fun EditExpenseScreen(
             }
 
             Text(
-                text = uiState.monthDisplayName,
+                text = uiState.selectedMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy",
+                    Locale("pt", "BR")
+                )).replaceFirstChar { it.titlecase(Locale("pt", "BR")) },
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.Black
@@ -105,12 +118,33 @@ fun EditExpenseScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
-                value = categoria,
-                onValueChange = { categoria = it },
-                label = { Text("Categoria") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            ExposedDropdownMenuBox(
+                expanded = expandedCategoryDropdown,
+                onExpandedChange = { expandedCategoryDropdown = !expandedCategoryDropdown }
+            ) {
+                OutlinedTextField(
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    value = categoriaSelecionada?.name ?: "Selecione uma categoria",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Categoria") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoryDropdown) }
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedCategoryDropdown,
+                    onDismissRequest = { expandedCategoryDropdown = false }
+                ) {
+                    categoryList.forEach { category ->
+                        DropdownMenuItem(
+                            text = { Text(category.name) },
+                            onClick = {
+                                categoriaSelecionada = category
+                                expandedCategoryDropdown = false
+                            }
+                        )
+                    }
+                }
+            }
 
             OutlinedTextField(
                 value = data,
@@ -125,14 +159,21 @@ fun EditExpenseScreen(
             ) {
                 val categoryList = com.igor.finansee.data.models.categoryList
                 Button(onClick = {
-                    val selectedCategory = categoryList.find { it.name == categoria }
-                    selectedCategory?.let { category ->
+                    val dataLocalDate = try {
+                        LocalDate.parse(data)
+                    } catch (e: Exception) {
+                        null
+                    }
+
+                    val selectedCategory = categoryList.find { it.name == categoriaSelecionada?.name }
+
+                    if (dataLocalDate != null && selectedCategory != null) {
                         viewModel.updateExpense(
                             editingExpenseId!!,
                             descricao,
                             valor.toDoubleOrNull() ?: 0.0,
-                            category,
-                            data
+                            selectedCategory,
+                            dataLocalDate
                         )
                         editingExpenseId = null
                     }
