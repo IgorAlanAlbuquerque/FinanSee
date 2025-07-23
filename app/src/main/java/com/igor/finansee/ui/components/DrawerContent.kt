@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
 @Composable
-fun DrawerContent(navController: NavHostController, onSendNotification: () -> Unit) {
+fun DrawerContent(navController: NavHostController, onCloseDrawer: () -> Unit, onSendNotification: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxHeight()
@@ -40,14 +40,20 @@ fun DrawerContent(navController: NavHostController, onSendNotification: () -> Un
                 text = "Contas",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { }
+                    .clickable {
+                        onCloseDrawer()
+                        navController.navigate("add_account_screen?initialTab=banco")
+                    }
                     .padding(vertical = 8.dp)
             )
             Text(
                 text = "Cartão de Crédito",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {}
+                    .clickable {
+                        onCloseDrawer()
+                        navController.navigate("add_account_screen?initialTab=cartao")
+                    }
                     .padding(vertical = 8.dp)
             )
             Text(

@@ -43,7 +43,10 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.collectAsState
 
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.igor.finansee.ui.components.CircularActionMenu
+import com.igor.finansee.ui.screens.AddAccountScreen
 import com.igor.finansee.ui.screens.AddExpenseScreen
 import com.igor.finansee.ui.screens.DonutChartScreen
 
@@ -87,7 +90,9 @@ class MainActivity : ComponentActivity() {
                     drawerState = drawerState,
                     gesturesEnabled = true,
                     drawerContent = {
-                        DrawerContent(navController) { }
+                        DrawerContent(navController, onCloseDrawer = {
+                            scope.launch { drawerState.close() }
+                        },) { }
                     },
                     content = {
                         var menuExpanded by remember { mutableStateOf(false) }
@@ -118,18 +123,28 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding)
                             ) {
                                 composable("home") { HomeScreen(navController, currentUser) }
-                                composable("profile") {
-                                    ProfileScreen(
-                                        navController,
-                                        currentUser
-                                    )
-                                }
+                                composable("profile") { ProfileScreen(navController, currentUser) }
                                 composable("profile") { ProfileScreen(navController, currentUser) }
                                 composable("plans") { PlansScreen(currentUser) }
                                 composable("donutChart") { DonutChartScreen() }
                                 composable("add_expense") { AddExpenseScreen(navController) }
                                 composable("edit_expense") { EditExpenseScreen() }
                                 composable("transactions") { TransactionScreen(currentUser) }
+                                composable(
+                                    route = "add_account_screen?initialTab={tab}",
+                                    arguments = listOf(navArgument("tab") {
+                                        type = NavType.StringType
+                                        defaultValue = "banco"
+                                    })
+                                ) { backStackEntry ->
+                                    val initialTab = backStackEntry.arguments?.getString("tab") ?: "banco"
+
+                                    AddAccountScreen(
+                                        navController = navController,
+                                        currentUser = currentUser,
+                                        initialTab = initialTab
+                                    )
+                                }
 
                                 composable("settings") {
                                     val context = LocalContext.current

@@ -2,6 +2,7 @@ package com.igor.finansee.data.daos
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Upsert
 import com.igor.finansee.data.models.BankAccount
 import kotlinx.coroutines.flow.Flow
 
@@ -12,4 +13,7 @@ interface BankAccountDao {
 
     @Query("SELECT * FROM bank_accounts WHERE userId = :userId")
     fun getAccountsForUser(userId: Int): Flow<List<BankAccount>>
+
+    @Upsert
+    suspend fun upsertBankAccount(account: BankAccount)
 }
