@@ -30,11 +30,11 @@ class ExpenseScreenViewModel(
         val endDate = month.plusMonths(1)
 
         expenseDao.getExpensesForPeriod(startDate, endDate)
-            .map{ expenses ->
+            .map{ expensesWithCategory ->
                 ExpenseScreenUiState(
                     selectedMonth = month,
-                    expenses = expenses,
-                    totalExpenses = expenses.sumOf { it.valor },
+                    expenses = expensesWithCategory,
+                    totalExpenses = expensesWithCategory.sumOf { it.expense.valor },
                     isLoading = false
                 )
             }
@@ -59,16 +59,16 @@ class ExpenseScreenViewModel(
         _selectedMonth.value = _selectedMonth.value.minusMonths(1)
     }
 
-    fun addExpense(descricao: String, valor: Double, categoria: Category, data: LocalDate) {
+    fun addExpense(descricao: String, valor: Double, categoryId: Int?, data: LocalDate) {
         viewModelScope.launch {
-            val newExpense = Expense(descricao = descricao, valor = valor, categoria = categoria, data = data)
+            val newExpense = Expense(descricao = descricao, valor = valor, categoryId = categoryId, data = data)
             expenseDao.upsertExpense(newExpense)
         }
     }
 
-    fun updateExpense(expenseId: UUID, descricao: String, valor: Double, categoria: Category, data: LocalDate) {
+    fun updateExpense(expenseId: UUID, descricao: String, valor: Double, categoryId: Int?, data: LocalDate) {
         viewModelScope.launch {
-            val expenseToUpdate = Expense(expenseId, descricao, valor, categoria, data)
+            val expenseToUpdate = Expense(expenseId, descricao, valor, categoryId, data)
             expenseDao.upsertExpense(expenseToUpdate)
         }
     }

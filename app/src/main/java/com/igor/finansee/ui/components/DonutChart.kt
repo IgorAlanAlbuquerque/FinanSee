@@ -12,11 +12,11 @@ import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.igor.finansee.data.models.Category
-import com.igor.finansee.data.models.Expense
+import com.igor.finansee.data.models.ExpenseWithCategory
 import com.igor.finansee.data.models.TransactionType
 @Composable
 fun DonutChart(
-    expenses: List<Expense>,
+    expenses: List<ExpenseWithCategory>,
     allCategories: List<Category>,
     transactionType: TransactionType,
     modifier: Modifier = Modifier
@@ -43,8 +43,10 @@ fun DonutChart(
             }
         },
         update = { chart ->
-            val grouped = expenses.groupBy { it.categoria.name }
-                .mapValues { entry -> entry.value.sumOf { it.valor } }
+            val grouped = expenses
+                .filter { it.category != null }
+                .groupBy { it.category!!.name }
+                .mapValues { entry -> entry.value.sumOf { it.expense.valor } }
 
             val entries = grouped.map { PieEntry(it.value.toFloat(), it.key) }
 

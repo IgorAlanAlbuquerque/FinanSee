@@ -3,11 +3,11 @@ package com.igor.finansee.data.states
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import com.igor.finansee.data.models.Expense
+import com.igor.finansee.data.models.ExpenseWithCategory
 
 data class ExpenseScreenUiState(
     val isLoading: Boolean = false,
-    val expenses: List<Expense> = emptyList(),
+    val expenses: List<ExpenseWithCategory> = emptyList(),
     val totalExpenses: Double = 0.0,
     val selectedMonth: LocalDate = LocalDate.now().withDayOfMonth(1)
 ) {

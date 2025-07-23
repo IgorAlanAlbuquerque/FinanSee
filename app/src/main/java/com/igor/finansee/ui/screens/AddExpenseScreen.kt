@@ -108,7 +108,7 @@ fun AddExpenseScreen(navController: NavHostController) {
                     viewModel.addExpense(
                         descricao = descricao,
                         valor = valorDouble,
-                        categoria = categoriaSelecionada!!,
+                        categoryId = categoriaSelecionada?.id,
                         data = dataAtual
                     )
                     navController.popBackStack()

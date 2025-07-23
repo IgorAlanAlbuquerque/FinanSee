@@ -47,12 +47,12 @@ fun EditExpenseScreen() {
 
     val scrollState = rememberScrollState()
 
-    fun startEditing(expense: Expense) {
-        editingExpenseId = expense.id
-        descricao = expense.descricao
-        valor = expense.valor.toString()
-        categoriaSelecionada = expense.categoria
-        data = expense.data.toString()
+    fun startEditing(expenseWithCategory: ExpenseWithCategory) {
+        editingExpenseId = expenseWithCategory.expense.id
+        descricao = expenseWithCategory.expense.descricao
+        valor = expenseWithCategory.expense.valor.toString()
+        categoriaSelecionada = expenseWithCategory.category
+        data = expenseWithCategory.expense.data.toString()
     }
 
     Column(
@@ -90,12 +90,12 @@ fun EditExpenseScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        expensesForMonth.forEach { expense ->
+        expensesForMonth.forEach { expenseWithCategory ->
             TextButton(
-                onClick = { startEditing(expense) },
+                onClick = { startEditing(expenseWithCategory) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("${expense.descricao} - R$${expense.valor}")
+                Text("${expenseWithCategory.expense.descricao} - R$${expenseWithCategory.expense.valor}")
             }
         }
 
@@ -169,7 +169,7 @@ fun EditExpenseScreen() {
                             editingExpenseId!!,
                             descricao,
                             valor.toDoubleOrNull() ?: 0.0,
-                            categoriaSelecionada!!,
+                            categoriaSelecionada?.id,
                             dataLocalDate
                         )
                         editingExpenseId = null
