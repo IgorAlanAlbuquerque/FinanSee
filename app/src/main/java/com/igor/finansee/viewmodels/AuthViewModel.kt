@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
 
+
     fun register(email: String, password: String, name: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             val success = repository.registerUser(email, password, name)

@@ -73,7 +73,6 @@ class MainActivity : ComponentActivity() {
 
             val currentUser = userList.first()
 
-            // Criar AuthViewModel usando factory para passar o AuthRepository
             val authViewModel: AuthViewModel = viewModel(
                 factory = AuthViewModelFactory(AuthRepository())
             )

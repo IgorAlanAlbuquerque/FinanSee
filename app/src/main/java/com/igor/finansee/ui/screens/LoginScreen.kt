@@ -1,6 +1,9 @@
 package com.igor.finansee.ui.screens
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +28,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.igor.finansee.R
 import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.LoginScreenViewModel
@@ -36,7 +40,6 @@ fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToSignUp: () -> Unit,
     onNavigateToForgotPassword: () -> Unit
-
 ) {
     val scrollState = rememberScrollState()
     val uiState = viewModel.uiState.collectAsState().value
@@ -50,6 +53,29 @@ fun LoginScreen(
         }
     }
 
+    // Criação do launcher para o login do Google
+    val googleSignInClient = authViewModel.getGoogleSignInClient(context)
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val account = task.result
+            val idToken = account?.idToken
+
+            if (idToken != null) {
+                authViewModel.loginWithGoogle(idToken) { success ->
+                    if (success) {
+                        Toast.makeText(context, "Login com Google realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                        onNavigateToHome()
+                    } else {
+                        Toast.makeText(context, "Falha no login com Google", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    // Interface do composable
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.background),
@@ -100,6 +126,10 @@ fun LoginScreen(
                         },
                         onSignUpClick = onNavigateToSignUp,
                         onForgotPasswordClick = onNavigateToForgotPassword,
+                        onGoogleLoginClick = {
+                            val signInIntent = googleSignInClient.signInIntent
+                            launcher.launch(signInIntent)
+                        },
                         isLoginEnabled = uiState.email.isNotBlank() && uiState.password.isNotBlank()
                     )
                     if (uiState.isLoading) {
@@ -116,6 +146,7 @@ fun LoginScreen(
         }
     }
 }
+
 
 @Composable
 fun LoginHeader() {
@@ -177,6 +208,7 @@ fun LoginFooter(
     onSignInClick: () -> Unit,
     onSignUpClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
+    onGoogleLoginClick: () -> Unit,  // Isso vai ser passado para o seu composable
     isLoginEnabled: Boolean
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -196,8 +228,19 @@ fun LoginFooter(
         TextButton(onClick = onForgotPasswordClick, enabled = isLoginEnabled) {
             Text(text = "Esqueci minha senha")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onGoogleLoginClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Login com Google")
+        }
     }
 }
+
+
 
 
 @Composable
