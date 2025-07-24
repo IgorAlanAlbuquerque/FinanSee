@@ -1,5 +1,4 @@
 package com.igor.finansee.ui.screens
-
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -11,8 +10,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -25,18 +23,40 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.R
-import com.igor.finansee.viewmodels.SignUpScreenViewModel
+import com.igor.finansee.viewmodels.AuthViewModel
 
 @Composable
 fun SignUpScreen(
-    viewModel: SignUpScreenViewModel = viewModel(),
+    authViewModel: AuthViewModel,
     onNavigateToLogin: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val uiState = viewModel.uiState.collectAsState().value
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+
+    fun doSignUp() {
+        if (password != confirmPassword) {
+            errorMessage = "As senhas não coincidem"
+            return
+        }
+        isLoading = true
+        errorMessage = null
+        authViewModel.register(email, password, name) { success ->
+            isLoading = false
+            if (success) {
+                Toast.makeText(context, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                onNavigateToLogin()
+            } else {
+                errorMessage = "Erro ao cadastrar usuário"
+            }
+        }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -45,9 +65,7 @@ fun SignUpScreen(
             painter = painterResource(id = R.drawable.background),
             contentDescription = "Fundo",
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .alpha(0.7f)
+            modifier = Modifier.fillMaxSize().alpha(0.7f)
         )
 
         Column(
@@ -64,52 +82,39 @@ fun SignUpScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     SignUpHeader()
                     Spacer(modifier = Modifier.height(20.dp))
                     SignUpFields(
-                        name = uiState.name,
-                        email = uiState.email,
-                        password = uiState.password,
-                        confirmPassword = uiState.confirmPassword,
-                        onNameChange = { viewModel.updateName(it) },
-                        onEmailChange = { viewModel.updateEmail(it) },
-                        onPasswordChange = { viewModel.updatePassword(it) },
-                        onConfirmPasswordChange = { viewModel.updateConfirmPassword(it) }
+                        name = name,
+                        email = email,
+                        password = password,
+                        confirmPassword = confirmPassword,
+                        onNameChange = { name = it },
+                        onEmailChange = { email = it },
+                        onPasswordChange = { password = it },
+                        onConfirmPasswordChange = { confirmPassword = it }
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                     SignUpFooter(
-                        onSignUpClick = { viewModel.signUp() },
+                        onSignUpClick = { doSignUp() },
                         onNavigateToLogin = onNavigateToLogin
                     )
-
-                    if (uiState.isLoading) {
+                    if (isLoading) {
                         Spacer(modifier = Modifier.height(16.dp))
                         CircularProgressIndicator()
                     }
-
-                    uiState.errorMessage?.let {
+                    errorMessage?.let {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(text = it, color = MaterialTheme.colorScheme.error)
-                    }
-
-                    if (uiState.isSuccess) {
-                        Toast.makeText(
-                            context,
-                            "Cadastro realizado com sucesso!",
-                            Toast.LENGTH_SHORT
-                        ).show()
                     }
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun SignUpHeader() {
@@ -148,9 +153,7 @@ fun SignUpFields(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Next
             ),
-            leadingIcon = {
-                Icon(Icons.Default.Person, contentDescription = "Ícone de nome")
-            }
+            leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Ícone de nome") }
         )
         Spacer(modifier = Modifier.height(16.dp))
         CustomTextField(
@@ -162,9 +165,7 @@ fun SignUpFields(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
             ),
-            leadingIcon = {
-                Icon(Icons.Default.Email, contentDescription = "Ícone de email")
-            }
+            leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Ícone de email") }
         )
         Spacer(modifier = Modifier.height(16.dp))
         CustomTextField(
@@ -177,9 +178,7 @@ fun SignUpFields(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Next
             ),
-            leadingIcon = {
-                Icon(Icons.Default.Lock, contentDescription = "Ícone de senha")
-            }
+            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Ícone de senha") }
         )
         Spacer(modifier = Modifier.height(16.dp))
         CustomTextField(
@@ -192,9 +191,7 @@ fun SignUpFields(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
             ),
-            leadingIcon = {
-                Icon(Icons.Default.Lock, contentDescription = "Ícone de confirmar senha")
-            }
+            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Ícone de confirmar senha") }
         )
     }
 }
@@ -207,13 +204,10 @@ fun SignUpFooter(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Button(
             onClick = onSignUpClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
+            modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
             Text(text = "Cadastrar")
         }
-
         TextButton(onClick = onNavigateToLogin) {
             Text(text = "Já tem uma conta? Faça login")
         }

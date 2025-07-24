@@ -26,13 +26,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.R
+import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.LoginScreenViewModel
 
 @Composable
 fun LoginScreen(
+    authViewModel: AuthViewModel,
     viewModel: LoginScreenViewModel = viewModel(),
     onNavigateToHome: () -> Unit,
-    onNavigateToSignUp: () -> Unit
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
+
 ) {
     val scrollState = rememberScrollState()
     val uiState = viewModel.uiState.collectAsState().value
@@ -86,11 +90,18 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(20.dp))
                     LoginFooter(
                         onSignInClick = {
-                            onNavigateToHome()
+                            authViewModel.login(uiState.email, uiState.password) { success ->
+                                if (success) {
+                                    viewModel.setSuccess(true)
+                                } else {
+                                    viewModel.setError("Email ou senha inválidos")
+                                }
+                            }
                         },
-                        onSignUpClick = onNavigateToSignUp
+                        onSignUpClick = onNavigateToSignUp,
+                        onForgotPasswordClick = onNavigateToForgotPassword,
+                        isLoginEnabled = uiState.email.isNotBlank() && uiState.password.isNotBlank()
                     )
-
                     if (uiState.isLoading) {
                         Spacer(modifier = Modifier.height(16.dp))
                         CircularProgressIndicator()
@@ -164,7 +175,9 @@ fun LoginFields(
 @Composable
 fun LoginFooter(
     onSignInClick: () -> Unit,
-    onSignUpClick: () -> Unit
+    onSignUpClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit,
+    isLoginEnabled: Boolean
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Button(
@@ -180,11 +193,12 @@ fun LoginFooter(
             Text(text = "Não tem uma conta? Cadastre-se")
         }
 
-        TextButton(onClick = { /* Implementar recuperação de senha */ }) {
+        TextButton(onClick = onForgotPasswordClick, enabled = isLoginEnabled) {
             Text(text = "Esqueci minha senha")
         }
     }
 }
+
 
 @Composable
 fun CustomTextField(

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">FinanSee</string>
+    <string name="default_web_client_id">AuthApp2</string>
+
 </resources>

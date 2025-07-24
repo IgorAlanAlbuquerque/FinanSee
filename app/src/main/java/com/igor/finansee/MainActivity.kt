@@ -1,74 +1,62 @@
 package com.igor.finansee
 
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.igor.finansee.data.datastore.UserPreferencesRepository
-import com.igor.finansee.ui.components.BottomNavigationBar
-import com.igor.finansee.ui.components.DrawerContent
-import com.igor.finansee.ui.components.TopBar
-import com.igor.finansee.ui.screens.HomeScreen
-import com.igor.finansee.ui.screens.PlansScreen
-import com.igor.finansee.ui.screens.ProfileScreen
-import com.igor.finansee.ui.screens.TransactionScreen
-import com.igor.finansee.ui.theme.FinanSeeTheme
-import kotlinx.coroutines.launch
-import com.igor.finansee.data.models.userList
-import com.igor.finansee.ui.screens.DailyReminderScreen
-import com.igor.finansee.ui.screens.EmailSettingsScreen
-import com.igor.finansee.ui.screens.NotificationSettingsScreen
-import com.igor.finansee.ui.screens.SettingsScreen
-import com.igor.finansee.viewmodels.SettingsViewModel
-import com.igor.finansee.viewmodels.SettingsViewModelFactory
-import androidx.compose.material3.FabPosition
-import androidx.compose.ui.unit.dp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
 import androidx.compose.material3.DrawerValue
-import androidx.compose.runtime.collectAsState
-
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.authapp2.view.ForgotPasswordScreen
+import com.igor.finansee.data.AuthRepository
+import com.igor.finansee.data.datastore.UserPreferencesRepository
+import com.igor.finansee.data.models.userList
+import com.igor.finansee.ui.components.BottomNavigationBar
 import com.igor.finansee.ui.components.CircularActionMenu
-import com.igor.finansee.ui.screens.AddAccountScreen
-import com.igor.finansee.ui.screens.AddExpenseScreen
-import com.igor.finansee.ui.screens.DonutChartScreen
+import com.igor.finansee.ui.components.DrawerContent
+import com.igor.finansee.ui.components.TopBar
+import com.igor.finansee.ui.screens.*
+import com.igor.finansee.viewmodels.AuthViewModel
+import com.igor.finansee.viewmodels.SettingsViewModel
+import com.igor.finansee.viewmodels.SettingsViewModelFactory
+import kotlinx.coroutines.launch
+import com.igor.finansee.ui.theme.FinanSeeTheme
+import com.igor.finansee.viewmodels.AuthViewModelFactory
 
-import com.igor.finansee.ui.screens.EditExpenseScreen
-
-/*class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            // Cria o NavController
-            val navController = rememberNavController()
-
-            // Surface é só pra ter background correto
-            Surface(color = MaterialTheme.colorScheme.background) {
-                // Chama seu NavGraph passando o navController
-                NavAuth(navController = navController)
-            }
-        }
-    }
-}*/
-
-
+object Routes {
+    const val AUTO_CHOICE = "auto_choice"
+    const val LOGIN = "login"
+    const val SIGN_UP = "sign_up"
+    const val HOME = "home"
+    const val PROFILE = "profile"
+    const val PLANS = "plans"
+    const val DONUT_CHART = "donutChart"
+    const val ADD_EXPENSE = "add_expense"
+    const val EDIT_EXPENSE = "edit_expense"
+    const val TRANSACTIONS = "transactions"
+    const val SETTINGS = "settings"
+    const val NOTIFICATION_SETTINGS = "notification_settings"
+    const val EMAIL_SETTINGS = "email_settings"
+    const val DAILY_REMINDER = "daily_reminder"
+}
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,6 +73,11 @@ class MainActivity : ComponentActivity() {
 
             val currentUser = userList.first()
 
+            // Criar AuthViewModel usando factory para passar o AuthRepository
+            val authViewModel: AuthViewModel = viewModel(
+                factory = AuthViewModelFactory(AuthRepository())
+            )
+
             FinanSeeTheme(selectedTheme = uiState.themeOption) {
                 ModalNavigationDrawer(
                     drawerState = drawerState,
@@ -92,7 +85,7 @@ class MainActivity : ComponentActivity() {
                     drawerContent = {
                         DrawerContent(navController, onCloseDrawer = {
                             scope.launch { drawerState.close() }
-                        },) { }
+                        }) { }
                     },
                     content = {
                         var menuExpanded by remember { mutableStateOf(false) }
@@ -119,17 +112,78 @@ class MainActivity : ComponentActivity() {
                         ) { innerPadding ->
                             NavHost(
                                 navController = navController,
-                                startDestination = "home",
+                                startDestination = Routes.AUTO_CHOICE,  // Aqui iniciamos com a autenticação
                                 modifier = Modifier.padding(innerPadding)
                             ) {
-                                composable("home") { HomeScreen(navController, currentUser) }
-                                composable("profile") { ProfileScreen(navController, currentUser) }
+                                // Tela de escolha de autenticação
+                                composable(Routes.AUTO_CHOICE) {
+                                    AutoChoiceScreen(
+                                        onLoginClick = {
+                                            navController.navigate(Routes.LOGIN) {
+                                                popUpTo(Routes.AUTO_CHOICE) { inclusive = true }
+                                            }
+                                        },
+                                        onRegisterClick = {
+                                            navController.navigate(Routes.SIGN_UP) {
+                                                popUpTo(Routes.AUTO_CHOICE) { inclusive = true }
+                                            }
+                                        }
+                                    )
+                                }
+
+                                // Tela de Login
+                                composable(Routes.LOGIN) {
+                                    LoginScreen(
+                                        authViewModel = authViewModel,
+                                        onNavigateToSignUp = {
+                                            navController.navigate(Routes.SIGN_UP) {
+                                                popUpTo(Routes.LOGIN) { inclusive = true }
+                                            }
+                                        },
+                                        onNavigateToHome = {
+                                            navController.navigate(Routes.HOME)
+                                        },
+                                        onNavigateToForgotPassword = {
+                                            navController.navigate("forgot_password")
+                                        }
+                                    )
+                                }
+
+                                // Tela de recuperação de senha
+                                composable("forgot_password") {
+                                    ForgotPasswordScreen(
+                                        navController = navController,
+                                        authViewModel = authViewModel
+                                    )
+                                }
+
+                                // Tela de cadastro
+                                composable(Routes.SIGN_UP) {
+                                    SignUpScreen(
+                                        authViewModel = authViewModel,
+                                        onNavigateToLogin = {
+                                            navController.navigate(Routes.LOGIN) {
+                                                popUpTo(Routes.SIGN_UP) { inclusive = true }
+                                            }
+                                        }
+                                    )
+                                }
+
+                                composable(Routes.HOME) {
+                                    HomeScreen(
+                                        navController = navController,
+                                        currentUser = currentUser
+                                    )
+                                }
+
+                                // Outras telas
                                 composable("profile") { ProfileScreen(navController, currentUser) }
                                 composable("plans") { PlansScreen(currentUser) }
                                 composable("donutChart") { DonutChartScreen() }
                                 composable("add_expense") { AddExpenseScreen(navController) }
                                 composable("edit_expense") { EditExpenseScreen() }
                                 composable("transactions") { TransactionScreen(currentUser) }
+
                                 composable(
                                     route = "add_account_screen?initialTab={tab}",
                                     arguments = listOf(navArgument("tab") {
@@ -138,7 +192,6 @@ class MainActivity : ComponentActivity() {
                                     })
                                 ) { backStackEntry ->
                                     val initialTab = backStackEntry.arguments?.getString("tab") ?: "banco"
-
                                     AddAccountScreen(
                                         navController = navController,
                                         currentUser = currentUser,
