@@ -16,16 +16,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.authapp2.view.ForgotPasswordScreen
+import com.igor.finansee.ui.screens.ForgotPasswordScreen
 import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.datastore.UserPreferencesRepository
 import com.igor.finansee.data.models.userList

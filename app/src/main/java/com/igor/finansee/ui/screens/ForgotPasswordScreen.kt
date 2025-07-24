@@ -1,4 +1,4 @@
-package com.example.authapp2.view
+package com.igor.finansee.ui.screens
 
 
 import android.util.Patterns
@@ -22,10 +22,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.igor.finansee.viewmodels.AuthViewModel
-import com.igor.finansee.viewmodels.ForgotPasswordViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

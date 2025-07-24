@@ -1,10 +1,12 @@
 package com.igor.finansee.viewmodels
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.igor.finansee.data.AuthRepository
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.igor.finansee.data.models.User
 import kotlinx.coroutines.launch
 
 class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
@@ -31,12 +33,15 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         }
     }
 
-    fun getUserName(onResult: (String?) -> Unit) {
-        viewModelScope.launch {
-            val name = repository.getUserName()
-            onResult(name)
+    suspend fun getCurrentUser(): User? {
+        return try {
+            repository.getCurrentUser()
+        } catch (e: Exception) {
+            Log.e("AuthViewModel", "Erro ao obter usuário: $e")
+            null
         }
     }
+
 
     fun loginWithGoogle(idToken: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {

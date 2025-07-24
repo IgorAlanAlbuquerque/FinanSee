@@ -64,6 +64,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
+    implementation ("androidx.compose.material:material-icons-extended:1.0.1")
 
     // Firebase & Google
     implementation(platform("com.google.firebase:firebase-bom:33.1.1"))

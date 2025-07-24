@@ -9,6 +9,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.igor.finansee.R
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.auth.GoogleAuthProvider
+import com.igor.finansee.data.models.User
+import java.time.LocalDate
 
 class AuthRepository {
 
@@ -55,20 +57,38 @@ class AuthRepository {
         }
     }
 
-    suspend fun getUserName(): String?{
+    suspend fun getCurrentUser(): User? {
         return try {
             val uid = auth.currentUser?.uid
-            if (uid != null){
+            if (uid != null) {
                 val snapshot = firestore.collection("users").document(uid).get().await()
-                snapshot.getString("name")
-            }else{
+
+                val name = snapshot.getString("name") ?: "Desconhecido"
+                val email = snapshot.getString("email") ?: "Email não disponível"
+                val password = snapshot.getString("password") ?: ""
+                val registrationDateStr = snapshot.getString("registrationDate")
+                val registrationDate = registrationDateStr?.let { LocalDate.parse(it) } ?: LocalDate.now()
+                val statusPremium = snapshot.getBoolean("statusPremium") ?: false
+                val fotoPerfil = snapshot.getLong("fotoPerfil")?.toInt() ?: R.drawable.perfil
+
+                User(
+                    id = uid.toInt(),
+                    email = email,
+                    name = name,
+                    registrationDate = registrationDate,
+                    password = password,
+                    fotoPerfil = fotoPerfil,
+                    statusPremium = statusPremium
+                )
+            } else {
                 null
             }
-        }catch (e: Exception){
-            Log.e("authRepository", "erro + $e")
+        } catch (e: Exception) {
+            Log.e("authRepository", "Erro ao obter usuário: $e")
             null
         }
     }
+
 
 
     fun getGoogleSignInClient(context: Context): GoogleSignInClient {
