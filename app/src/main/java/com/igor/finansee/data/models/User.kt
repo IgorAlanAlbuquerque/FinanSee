@@ -8,12 +8,11 @@ import java.util.Date
 
 @Entity(tableName = "user")
 data class User(
-    @PrimaryKey
-    val id: String,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
     val email: String,
     val name: String,
     val registrationDate: LocalDate,
-    val password: String,
     val fotoPerfil: Int? = null,
     val statusPremium: Boolean,
     @ServerTimestamp

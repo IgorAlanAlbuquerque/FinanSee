@@ -16,11 +16,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.igor.finansee.data.AppDatabase
 import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.datastore.UserPreferencesRepository
@@ -30,12 +32,12 @@ import com.igor.finansee.viewmodels.SettingsViewModelFactory
 import com.igor.finansee.viewmodels.AuthViewModelFactory
 import kotlinx.coroutines.launch
 import com.igor.finansee.navigation.NavAuth
+import com.igor.finansee.view.screens.AddExpenseScreen
 import com.igor.finansee.view.components.BottomNavigationBar
 import com.igor.finansee.view.components.CircularActionMenu
 import com.igor.finansee.view.components.DrawerContent
 import com.igor.finansee.view.components.TopBar
 import com.igor.finansee.view.screens.AddAccountScreen
-import com.igor.finansee.view.screens.AddExpenseScreen
 import com.igor.finansee.view.screens.DailyReminderScreen
 import com.igor.finansee.view.screens.DonutChartScreen
 import com.igor.finansee.view.screens.EditExpenseScreen
@@ -45,6 +47,7 @@ import com.igor.finansee.view.screens.NotificationSettingsScreen
 import com.igor.finansee.view.screens.PlansScreen
 import com.igor.finansee.view.screens.ProfileScreen
 import com.igor.finansee.view.screens.SettingsScreen
+import com.igor.finansee.view.screens.SplashScreen
 import com.igor.finansee.view.screens.TransactionScreen
 import com.igor.finansee.view.theme.FinanSeeTheme
 import com.igor.finansee.viewmodels.HomeScreenViewModel
@@ -164,9 +167,9 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
-//                                composable(Routes.PROFILE) {
-//                                    ProfileScreen(navController, currentUser)
-//                                }
+                                composable(Routes.PROFILE) {
+                                    ProfileScreen(navController, authViewModel)
+                                }
 
                                 composable(Routes.PLANS) {
                                     PlansScreen()
@@ -181,12 +184,14 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 composable(Routes.EDIT_EXPENSE) {
-                                    EditExpenseScreen()
+                                    EditExpenseScreen(
+                                        authRepository = authRepository
+                                    )
                                 }
 
-                                /*composable(Routes.TRANSACTIONS) {
-                                    TransactionScreen(currentUser)
-                                }*/
+                                composable(Routes.TRANSACTIONS) {
+                                    TransactionScreen(authViewModel)
+                                }
 
 
                                 composable(Routes.SETTINGS) {
@@ -270,8 +275,8 @@ class MainActivity : ComponentActivity() {
 
                                     AddAccountScreen(
                                         navController = navController,
-                                        currentUser = currentUser,
-                                        initialTab = initialTab
+                                        authViewModel,
+                                        initialTab = initialTab,
                                     )
                                 }
                             }

@@ -13,12 +13,12 @@ import com.igor.finansee.data.repository.CreditCardRepository
 class AccountViewModelFactory(
     private val bankAccountDao: BankAccountDao,
     private val creditCardDao: CreditCardDao,
-    private val user: User
+    private val user: User?
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AccountViewModel::class.java)) {
             val firestore = Firebase.firestore
-            val userId = user.id.toString()
+            val userId = user?.id.toString()
 
             val bankAccountRepository = BankAccountRepository(bankAccountDao, firestore, userId)
             val creditCardRepository = CreditCardRepository(creditCardDao, firestore, userId)

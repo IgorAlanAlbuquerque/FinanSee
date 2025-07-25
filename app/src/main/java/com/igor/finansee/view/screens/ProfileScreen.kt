@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,18 +31,23 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.igor.finansee.data.models.User
 import com.igor.finansee.view.theme.*
+import com.igor.finansee.viewmodels.AuthViewModel
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
-    currentUser: User,
+    authViewModel: AuthViewModel,
     modifier: Modifier = Modifier
 ) {
+
+    val currentUser by authViewModel.currentUser.collectAsState()
+
 
     LazyColumn(
         modifier = modifier
@@ -90,13 +97,13 @@ fun ProfileScreen(
 }
 
 @Composable
-fun ProfileHeader(user: User) {
+fun ProfileHeader(user: User?) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(contentAlignment = Alignment.BottomEnd) {
-            if (user.fotoPerfil != null) {
+            if (user?.fotoPerfil != null) {
                 Image(
                     painter = painterResource(id = user.fotoPerfil),
                     contentDescription = "Foto de perfil",
@@ -136,13 +143,13 @@ fun ProfileHeader(user: User) {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = user.name,
+            text = user?.name ?: "nada" ,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = TextPrimaryLight
         )
         Text(
-            text = user.email,
+            text = user?.email ?: "nadinha" ,
             fontSize = 14.sp,
             color = TextSecondaryLight
         )
@@ -162,12 +169,12 @@ fun ProfileHeader(user: User) {
             ) {
                 ProfileInfoItem(
                     icon = Icons.Filled.WorkspacePremium,
-                    text = if (user.statusPremium) "Status Premium" else "Status Grátis"
+                    text = if (user?.statusPremium ?: false) "Status Premium" else "Status Grátis"
                 )
                 val dateFormatter = DateTimeFormatter.ofPattern("dd/MMM", Locale("pt", "BR"))
                 ProfileInfoItem(
                     icon = Icons.Filled.CalendarToday,
-                    text = "No FinanSee desde ${user.registrationDate.format(dateFormatter)}"
+                    text = "No FinanSee desde ${user?.registrationDate?.format(dateFormatter)}"
                 )
             }
         }

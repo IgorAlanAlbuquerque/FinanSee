@@ -23,8 +23,8 @@ class ExpenseRepository(
 
     private val collection = firestore.collection("users").document(userId).collection("expenses")
 
-    fun getExpensesFromRoom(startDate: LocalDate, endDate: LocalDate) =
-        expenseDao.getExpensesForPeriod(startDate, endDate)
+    fun getExpensesFromRoom(userId: String, startDate: LocalDate, endDate: LocalDate) =
+        expenseDao.getExpensesForPeriod(userId, startDate, endDate)
 
     fun startListeningForRemoteChanges() {
         collection.addSnapshotListener { snapshots, error ->
@@ -60,8 +60,11 @@ class ExpenseRepository(
         }
     }
 
-    suspend fun getExpenseById(expenseId: UUID): Expense? {
-        return expenseDao.getExpenseById(expenseId)
+    suspend fun getExpenseById(userId: String, expenseId: UUID): Expense? {
+        return expenseDao.getExpenseById(
+            expenseId,
+            userId = userId
+        )
     }
 
     fun cancelScope() {

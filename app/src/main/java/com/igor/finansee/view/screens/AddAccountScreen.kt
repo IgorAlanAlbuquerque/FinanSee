@@ -4,23 +4,27 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.igor.finansee.data.AppDatabase
 import com.igor.finansee.data.models.User
 import com.igor.finansee.viewmodels.AccountViewModel
 import com.igor.finansee.viewmodels.AccountViewModelFactory
+import com.igor.finansee.viewmodels.AuthViewModel
 
 @Composable
 fun AddAccountScreen(
     navController: NavHostController,
-    currentUser: User,
+    authViewModel: AuthViewModel,
     initialTab: String
 ) {
+    val currentUser by authViewModel.currentUser.collectAsState()
     val initialIndex = if (initialTab == "cartao") 1 else 0
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
@@ -84,7 +88,7 @@ fun AddAccountScreen(
                             name = accountName,
                             type = accountType,
                             initialBalance = initialBalance.toDoubleOrNull() ?: 0.0,
-                            userId = currentUser.id
+                            userId = currentUser?.id ?: 0
                         )
                     } else {
                         viewModel.addCreditCard(
@@ -93,7 +97,7 @@ fun AddAccountScreen(
                             limit = cardLimit.toDoubleOrNull() ?: 0.0,
                             closingDay = cardClosingDay.toIntOrNull() ?: 1,
                             dueDay = cardDueDay.toIntOrNull() ?: 10,
-                            userId = currentUser.id
+                            userId = currentUser?.id ?: 0
                         )
                     }
                     navController.popBackStack()

@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.igor.finansee.data.models.User
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
@@ -34,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.AppDatabase
 import com.igor.finansee.data.models.Category
@@ -46,21 +46,24 @@ import com.igor.finansee.view.theme.CardBackgroundTransactions
 import com.igor.finansee.view.components.getCategoryUIDetails
 import com.igor.finansee.view.theme.TextPrimaryLight
 import com.igor.finansee.view.theme.TextSecondaryLight
+import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.TransactionScreenViewModel
 import com.igor.finansee.viewmodels.TransactionScreenViewModelFactory
 
 @Composable
 fun TransactionScreen(
-    currentUser: User,
+    authViewModel: AuthViewModel,
     modifier: Modifier = Modifier
 ) {
+    val user by authViewModel.currentUser.collectAsState()
+
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val factory = TransactionScreenViewModelFactory(
         transactionDao = db.transactionDao(),
         bankAccountDao = db.bankAccountDao(),
         categoryDao = db.categoryDao(),
-        user = currentUser
+        user = user
     )
 
     val viewModel: TransactionScreenViewModel = viewModel(factory = factory)

@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.util.UUID
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
@@ -15,7 +16,8 @@ import java.util.Date
         parentColumns = ["id"],
         childColumns = ["categoryId"],
         onDelete = ForeignKey.SET_NULL
-    )]
+    )],
+    indices = [Index(value = ["categoryId"])]
 )
 data class Expense(
     @PrimaryKey

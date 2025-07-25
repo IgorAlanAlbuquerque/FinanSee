@@ -16,12 +16,12 @@ class TransactionScreenViewModelFactory(
     private val transactionDao: TransactionDao,
     private val bankAccountDao: BankAccountDao,
     private val categoryDao: CategoryDao,
-    private val user: User
+    private val user: User?
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TransactionScreenViewModel::class.java)) {
             val firestore = Firebase.firestore
-            val userId = user.id.toString()
+            val userId = user?.id.toString()
 
             val transactionRepository = TransactionRepository(transactionDao, firestore, userId)
             val bankAccountRepository = BankAccountRepository(bankAccountDao, firestore, userId)

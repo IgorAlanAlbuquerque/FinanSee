@@ -27,9 +27,7 @@ class AuthRepository(private val userDao: UserDao) {
                     name = name,
                     email = email,
                     registrationDate = LocalDate.now(),
-                    password = "",
-                    statusPremium = false,
-                    fotoPerfil = null
+                    statusPremium = false
                 )
                 userDao.insert(newUser)
                 newUser
@@ -68,7 +66,6 @@ class AuthRepository(private val userDao: UserDao) {
                         name = firebaseUser.displayName ?: "Usuário",
                         email = firebaseUser.email ?: "",
                         registrationDate = LocalDate.now(),
-                        password = "",
                         statusPremium = false,
                         fotoPerfil = null
                     )

@@ -35,7 +35,7 @@ import com.igor.finansee.data.utils.Converters
         Transaction::class,
         User::class
     ],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

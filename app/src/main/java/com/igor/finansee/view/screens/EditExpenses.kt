@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.igor.finansee.data.AppDatabase
+import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.viewmodels.ExpenseScreenViewModelFactory
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -27,10 +28,10 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditExpenseScreen() {
+fun EditExpenseScreen(authRepository: AuthRepository) {
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
-    val factory = ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao())
+    val factory = ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao(), authRepository)
     val viewModel: ExpenseScreenViewModel = viewModel(factory = factory)
 
     val uiState by viewModel.uiState.collectAsState()

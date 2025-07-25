@@ -77,9 +77,9 @@ class ExpenseScreenViewModel(
     }
 
 
-    fun deleteExpense(expense: Expense) {
+    fun deleteExpense(expense: UUID) {
         viewModelScope.launch {
-            expenseDao.deleteExpense(expense)
+            expenseDao.deleteExpenseById(expense)
         }
     }
     fun selectPreviousMonth() {

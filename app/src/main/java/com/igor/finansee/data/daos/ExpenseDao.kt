@@ -28,8 +28,8 @@ interface ExpenseDao {
     @Upsert
     suspend fun upsertExpense(expense: Expense)
 
-    @Delete
-    suspend fun deleteExpense(expense: Expense)
+    @Query("DELETE FROM expense WHERE id = :expenseId")
+    suspend fun deleteExpenseById(expenseId: UUID)
 
     @Transaction
     @Query("SELECT * FROM expense WHERE data >= :start AND data < :end")

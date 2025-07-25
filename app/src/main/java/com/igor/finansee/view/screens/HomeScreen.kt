@@ -89,33 +89,7 @@ data class CategoryWithAmount(
 fun HomeScreen(
     navController: NavHostController,
     viewModel: HomeScreenViewModel = viewModel()
-
-
 ) {
-    val currentUser by viewModel.currentUser.collectAsState()
-
-    val context = LocalContext.current
-    val db = AppDatabase.getDatabase(context)
-    val bankAccountDao = db.bankAccountDao()
-    val creditCardDao = db.creditCardDao()
-    val faturaDao = db.faturaCreditCardDao()
-    val transactionDao = db.transactionDao()
-    val planningDao = db.monthPlanningDao()
-    val categoryDao = db.categoryDao()
-    val userDao = db.userDao()
-    val authRepository = AuthRepository(userDao)
-
-    val factory = HomeScreenViewModelFactory(
-        bankAccountDao = bankAccountDao,
-        creditCardDao = creditCardDao,
-        faturaDao = faturaDao,
-        transactionDao = transactionDao,
-        planningDao = planningDao,
-        categoryDao = categoryDao,
-        authRepository = authRepository
-    )
-
-    val viewModel: HomeScreenViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsState()
 
     LazyColumn(

@@ -1,4 +1,4 @@
-package com.igor.finansee.ui.screens
+package com.igor.finansee.view.screens
 
 import ExpenseScreenViewModel
 import androidx.compose.foundation.layout.*
