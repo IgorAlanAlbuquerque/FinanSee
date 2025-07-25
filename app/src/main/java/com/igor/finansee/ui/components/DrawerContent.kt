@@ -1,5 +1,6 @@
 package com.igor.finansee.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,10 +11,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 
 @Composable
-fun DrawerContent(navController: NavHostController, onCloseDrawer: () -> Unit, onSendNotification: () -> Unit) {
+fun DrawerContent(onLogout: () -> Unit,navController: NavHostController, onCloseDrawer: () -> Unit, onSendNotification: () -> Unit,) {
     Surface(
         modifier = Modifier
             .fillMaxHeight()
@@ -67,7 +69,12 @@ fun DrawerContent(navController: NavHostController, onCloseDrawer: () -> Unit, o
                 text = "Sair",
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier
-                    .clickable { }
+                    .clickable {
+                        Log.d("LogoutCheck", "O botão SAIR foi clicado!")
+
+                        onCloseDrawer()
+                        onLogout()
+                    }
                     .padding(vertical = 8.dp)
             )
 

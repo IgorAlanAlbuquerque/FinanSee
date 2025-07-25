@@ -1,4 +1,3 @@
-/*
 package com.igor.finansee.viewmodels
 
 import android.app.Application
@@ -126,4 +125,3 @@ class SensorAdaptViewModel(
         sensorManager.unregisterListener(this)
     }
 }
-*/

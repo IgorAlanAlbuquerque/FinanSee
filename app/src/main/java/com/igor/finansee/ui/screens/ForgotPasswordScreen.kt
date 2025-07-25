@@ -1,6 +1,5 @@
 package com.igor.finansee.ui.screens
 
-
 import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -11,7 +10,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,19 +20,27 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.igor.finansee.viewmodels.AuthViewModel
+import com.igor.finansee.viewmodels.ForgotPasswordViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ForgotPasswordScreen(navController: NavController, authViewModel: AuthViewModel)
- {
-    var email by remember { mutableStateOf("") }
+fun ForgotPasswordScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel,
+    forgotPasswordViewModel: ForgotPasswordViewModel = viewModel()
+) {
+    val uiState by forgotPasswordViewModel.uiState.collectAsState()
+    val email = uiState.email // Acessa o email a partir do estado
+
     var isLoading by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
-     val isEmailValid by remember(email) {
+    val isEmailValid by remember(email) {
         derivedStateOf {
             Patterns.EMAIL_ADDRESS.matcher(email).matches()
         }
@@ -65,8 +71,9 @@ fun ForgotPasswordScreen(navController: NavController, authViewModel: AuthViewMo
         )
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = email, // Usa o email do ViewModel
+            // 2. Envia o evento de mudança para o ViewModel
+            onValueChange = { forgotPasswordViewModel.updateEmail(it) },
             label = { Text("Seu email de cadastro") },
             leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Ícone de Email") },
             modifier = Modifier.fillMaxWidth(),
@@ -76,9 +83,7 @@ fun ForgotPasswordScreen(navController: NavController, authViewModel: AuthViewMo
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Done
             ),
-            keyboardActions = KeyboardActions(
-                onDone = { focusManager.clearFocus() }
-            )
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
         )
 
         AnimatedVisibility(visible = email.isNotEmpty() && !isEmailValid) {
@@ -94,12 +99,12 @@ fun ForgotPasswordScreen(navController: NavController, authViewModel: AuthViewMo
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Botão de Recuperação
         Button(
             onClick = {
                 isLoading = true
                 focusManager.clearFocus()
-                authViewModel.resetPassword(email) { success ->
+                // 3. Chama a função de lógica de negócio do ViewModel
+                forgotPasswordViewModel.sendPasswordResetEmail(authViewModel) { success ->
                     isLoading = false
                     if (success) {
                         Toast.makeText(context, "Email de recuperação enviado!", Toast.LENGTH_LONG).show()
@@ -126,8 +131,6 @@ fun ForgotPasswordScreen(navController: NavController, authViewModel: AuthViewMo
             }
         }
 
-
-        // Botão para Voltar ao Login
         TextButton(
             onClick = { if (!isLoading) navController.popBackStack() },
             modifier = Modifier.padding(top = 8.dp)

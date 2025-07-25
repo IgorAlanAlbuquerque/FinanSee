@@ -17,12 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import com.igor.finansee.ui.screens.ForgotPasswordScreen
 import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.datastore.UserPreferencesRepository
 import com.igor.finansee.data.models.userList
@@ -34,11 +31,13 @@ import com.igor.finansee.ui.screens.*
 import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.SettingsViewModel
 import com.igor.finansee.viewmodels.SettingsViewModelFactory
+import com.igor.finansee.viewmodels.AuthViewModelFactory
 import kotlinx.coroutines.launch
 import com.igor.finansee.ui.theme.FinanSeeTheme
-import com.igor.finansee.viewmodels.AuthViewModelFactory
+import com.igor.finansee.navigation.NavAuth  // Importando a navegação que você criou
 
 object Routes {
+    const val SPLASH = "splash_screen"
     const val AUTO_CHOICE = "auto_choice"
     const val LOGIN = "login"
     const val SIGN_UP = "sign_up"
@@ -53,7 +52,11 @@ object Routes {
     const val NOTIFICATION_SETTINGS = "notification_settings"
     const val EMAIL_SETTINGS = "email_settings"
     const val DAILY_REMINDER = "daily_reminder"
+    const val FORGOT_PASSWORD = "forgot_password"
+
+
 }
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,7 +71,7 @@ class MainActivity : ComponentActivity() {
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val scope = rememberCoroutineScope()
 
-            val currentUser = userList.first()
+            val currentUser = userList.first()  // Exemplo de usuário para inicializar a navegação
 
             val authViewModel: AuthViewModel = viewModel(
                 factory = AuthViewModelFactory(AuthRepository())
@@ -79,9 +82,19 @@ class MainActivity : ComponentActivity() {
                     drawerState = drawerState,
                     gesturesEnabled = true,
                     drawerContent = {
-                        DrawerContent(navController, onCloseDrawer = {
-                            scope.launch { drawerState.close() }
-                        }) { }
+                        DrawerContent(
+                            navController = navController,
+                            onCloseDrawer = {
+                                scope.launch { drawerState.close() }
+                            },
+                            onLogout = {
+                                authViewModel.logout()
+                                navController.navigate(Routes.LOGIN) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            },
+                            onSendNotification = {}
+                        )
                     },
                     content = {
                         var menuExpanded by remember { mutableStateOf(false) }
@@ -108,62 +121,16 @@ class MainActivity : ComponentActivity() {
                         ) { innerPadding ->
                             NavHost(
                                 navController = navController,
-                                startDestination = Routes.AUTO_CHOICE,  // Aqui iniciamos com a autenticação
+                                startDestination = Routes.SPLASH,
                                 modifier = Modifier.padding(innerPadding)
                             ) {
-                                // Tela de escolha de autenticação
-                                composable(Routes.AUTO_CHOICE) {
-                                    AutoChoiceScreen(
-                                        onLoginClick = {
-                                            navController.navigate(Routes.LOGIN) {
-                                                popUpTo(Routes.AUTO_CHOICE) { inclusive = true }
-                                            }
-                                        },
-                                        onRegisterClick = {
-                                            navController.navigate(Routes.SIGN_UP) {
-                                                popUpTo(Routes.AUTO_CHOICE) { inclusive = true }
-                                            }
-                                        }
-                                    )
+                                // AS CHAVES EXTRAS FORAM REMOVIDAS DAQUI
+
+                                composable(Routes.SPLASH) {
+                                    SplashScreen(navController, authViewModel)
                                 }
 
-                                // Tela de Login
-                                composable(Routes.LOGIN) {
-                                    LoginScreen(
-                                        authViewModel = authViewModel,
-                                        onNavigateToSignUp = {
-                                            navController.navigate(Routes.SIGN_UP) {
-                                                popUpTo(Routes.LOGIN) { inclusive = true }
-                                            }
-                                        },
-                                        onNavigateToHome = {
-                                            navController.navigate(Routes.HOME)
-                                        },
-                                        onNavigateToForgotPassword = {
-                                            navController.navigate("forgot_password")
-                                        }
-                                    )
-                                }
-
-                                // Tela de recuperação de senha
-                                composable("forgot_password") {
-                                    ForgotPasswordScreen(
-                                        navController = navController,
-                                        authViewModel = authViewModel
-                                    )
-                                }
-
-                                // Tela de cadastro
-                                composable(Routes.SIGN_UP) {
-                                    SignUpScreen(
-                                        authViewModel = authViewModel,
-                                        onNavigateToLogin = {
-                                            navController.navigate(Routes.LOGIN) {
-                                                popUpTo(Routes.SIGN_UP) { inclusive = true }
-                                            }
-                                        }
-                                    )
-                                }
+                                NavAuth(navController, authViewModel)
 
                                 composable(Routes.HOME) {
                                     HomeScreen(
@@ -172,30 +139,32 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
-                                // Outras telas
-                                composable("profile") { ProfileScreen(navController, currentUser) }
-                                composable("plans") { PlansScreen(currentUser) }
-                                composable("donutChart") { DonutChartScreen() }
-                                composable("add_expense") { AddExpenseScreen(navController) }
-                                composable("edit_expense") { EditExpenseScreen() }
-                                composable("transactions") { TransactionScreen(currentUser) }
-
-                                composable(
-                                    route = "add_account_screen?initialTab={tab}",
-                                    arguments = listOf(navArgument("tab") {
-                                        type = NavType.StringType
-                                        defaultValue = "banco"
-                                    })
-                                ) { backStackEntry ->
-                                    val initialTab = backStackEntry.arguments?.getString("tab") ?: "banco"
-                                    AddAccountScreen(
-                                        navController = navController,
-                                        currentUser = currentUser,
-                                        initialTab = initialTab
-                                    )
+                                composable(Routes.PROFILE) {
+                                    ProfileScreen(navController, currentUser)
                                 }
 
-                                composable("settings") {
+                                composable(Routes.PLANS) {
+                                    PlansScreen(currentUser)
+                                }
+
+                                composable(Routes.DONUT_CHART) {
+                                    DonutChartScreen()
+                                }
+
+                                composable(Routes.ADD_EXPENSE) {
+                                    AddExpenseScreen(navController)
+                                }
+
+                                composable(Routes.EDIT_EXPENSE) {
+                                    EditExpenseScreen()
+                                }
+
+                                composable(Routes.TRANSACTIONS) {
+                                    TransactionScreen(currentUser)
+                                }
+
+
+                                composable(Routes.SETTINGS) {
                                     val context = LocalContext.current
                                     val repository =
                                         remember { UserPreferencesRepository(context) }
@@ -210,7 +179,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
-                                composable("notification_settings") {
+                                composable(Routes.NOTIFICATION_SETTINGS) {
                                     val context = LocalContext.current
                                     val repository =
                                         remember { UserPreferencesRepository(context) }
@@ -221,13 +190,21 @@ class MainActivity : ComponentActivity() {
 
                                     NotificationSettingsScreen(
                                         onNavigateBack = { navController.popBackStack() },
-                                        onNavigateToEmailSettings = { navController.navigate("email_settings") },
-                                        onNavigateDailyReminder = { navController.navigate("daily_reminder") },
+                                        onNavigateToEmailSettings = {
+                                            navController.navigate(
+                                                Routes.EMAIL_SETTINGS
+                                            )
+                                        },
+                                        onNavigateDailyReminder = {
+                                            navController.navigate(
+                                                Routes.DAILY_REMINDER
+                                            )
+                                        },
                                         viewModel = settingsViewModel
                                     )
                                 }
 
-                                composable("email_settings") {
+                                composable(Routes.EMAIL_SETTINGS) {
                                     val context = LocalContext.current
                                     val repository =
                                         remember { UserPreferencesRepository(context) }
@@ -242,7 +219,9 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
-                                composable("daily_reminder") {
+
+
+                                composable(Routes.DAILY_REMINDER) {
                                     val context = LocalContext.current
                                     val repository =
                                         remember { UserPreferencesRepository(context) }

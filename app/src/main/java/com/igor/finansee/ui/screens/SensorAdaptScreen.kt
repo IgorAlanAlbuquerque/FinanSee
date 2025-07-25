@@ -1,4 +1,3 @@
-/*
 package com.igor.finansee.ui.screens
 
 import androidx.compose.foundation.layout.Column
@@ -48,4 +47,3 @@ fun SensorAdaptScreen(viewModel: SensorAdaptViewModel = viewModel()) {
         }
     }
 }
-*/

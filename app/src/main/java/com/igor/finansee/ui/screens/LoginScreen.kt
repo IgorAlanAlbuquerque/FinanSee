@@ -45,7 +45,6 @@ fun LoginScreen(
     val uiState = viewModel.uiState.collectAsState().value
     val context = LocalContext.current
 
-    // ✅ Navegação ao sucesso
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             Toast.makeText(context, "Login realizado com sucesso!", Toast.LENGTH_SHORT).show()
@@ -53,7 +52,6 @@ fun LoginScreen(
         }
     }
 
-    // Criação do launcher para o login do Google
     val googleSignInClient = authViewModel.getGoogleSignInClient(context)
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()) { result ->
@@ -130,7 +128,7 @@ fun LoginScreen(
                             val signInIntent = googleSignInClient.signInIntent
                             launcher.launch(signInIntent)
                         },
-                        isLoginEnabled = uiState.email.isNotBlank() && uiState.password.isNotBlank()
+                        isLoginEnabled = uiState.email.isNotBlank()
                     )
                     if (uiState.isLoading) {
                         Spacer(modifier = Modifier.height(16.dp))
@@ -208,7 +206,7 @@ fun LoginFooter(
     onSignInClick: () -> Unit,
     onSignUpClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
-    onGoogleLoginClick: () -> Unit,  // Isso vai ser passado para o seu composable
+    onGoogleLoginClick: () -> Unit,
     isLoginEnabled: Boolean
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {

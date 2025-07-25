@@ -33,9 +33,9 @@ fun CircularActionMenu(navController: NavController) {
         CircularMenuItem(Icons.Default.Assessment, Color(0xFF3498DB), "DonutChart") {
             navController.navigate("donutChart")
         },
-        /*CircularMenuItem(Icons.Default.Sensors, Color(0xFF3498DB), "SensorAdapt") {
+        CircularMenuItem(Icons.Default.Sensors, Color(0xFF3498DB), "SensorAdapt") {
         navController.navigate("sensor_adapt")
-    }*/
+    }
 
     )
 
