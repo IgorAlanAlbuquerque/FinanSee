@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 
 package com.igor.finansee.view.screens
+=======
+package com.igor.finansee.view.screens
+
+>>>>>>> upstream/main
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*

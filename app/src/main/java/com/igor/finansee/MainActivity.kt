@@ -17,14 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.igor.finansee.data.AppDatabase
 import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.datastore.UserPreferencesRepository
-
-import com.igor.finansee.ui.screens.*
 import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.SettingsViewModel
 import com.igor.finansee.viewmodels.SettingsViewModelFactory
@@ -35,6 +34,8 @@ import com.igor.finansee.view.components.BottomNavigationBar
 import com.igor.finansee.view.components.CircularActionMenu
 import com.igor.finansee.view.components.DrawerContent
 import com.igor.finansee.view.components.TopBar
+import com.igor.finansee.view.screens.AddAccountScreen
+import com.igor.finansee.view.screens.AddExpenseScreen
 import com.igor.finansee.view.screens.DailyReminderScreen
 import com.igor.finansee.view.screens.DonutChartScreen
 import com.igor.finansee.view.screens.EditExpenseScreen
@@ -255,6 +256,22 @@ class MainActivity : ComponentActivity() {
                                     DailyReminderScreen(
                                         onNavigateBack = { navController.popBackStack() },
                                         viewModel = settingsViewModel
+                                    )
+                                }
+
+                                composable(
+                                    route = "add_account_screen?initialTab={tab}",
+                                    arguments = listOf(navArgument("tab") {
+                                        type = NavType.StringType
+                                        defaultValue = "banco"
+                                    })
+                                ) { backStackEntry ->
+                                    val initialTab = backStackEntry.arguments?.getString("tab") ?: "banco"
+
+                                    AddAccountScreen(
+                                        navController = navController,
+                                        currentUser = currentUser,
+                                        initialTab = initialTab
                                     )
                                 }
                             }
