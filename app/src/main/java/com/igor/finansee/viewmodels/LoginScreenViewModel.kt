@@ -32,4 +32,12 @@ class LoginScreenViewModel : ViewModel() {
             _uiState.update { it.copy(isLoading = false) }
         }
     }
+
+    fun setSuccess(success: Boolean) {
+        _uiState.update { it.copy(isSuccess = success, isLoading = false) }
+    }
+
+    fun setError(message: String) {
+        _uiState.update { it.copy(errorMessage = message, isLoading = false) }
+    }
 }

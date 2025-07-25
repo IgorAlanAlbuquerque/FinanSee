@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "863598090647",
+    "firebase_url": "https://finansee123987-default-rtdb.firebaseio.com",
+    "project_id": "finansee123987",
+    "storage_bucket": "finansee123987.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:863598090647:android:631e3e2bc0deffa4f28cd2",
+        "android_client_info": {
+          "package_name": "com.igor.finansee"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "863598090647-ksufirmaf02cvgt5ks5q5006pmjh74m8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.igor.finansee",
+            "certificate_hash": "640ca520e9256c0e077ca43a965343c2552a2005"
+          }
+        },
+        {
+          "client_id": "863598090647-jac8rvqooknmpkscjikero3c7pqsvn72.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVJ9DXQ6pfBpH4xPFOgkzzl3YHbIOiRxY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "863598090647-jac8rvqooknmpkscjikero3c7pqsvn72.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,73 +1,61 @@
 package com.igor.finansee
 
+import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.datastore.UserPreferencesRepository
-import com.igor.finansee.view.components.BottomNavigationBar
-import com.igor.finansee.view.components.DrawerContent
-import com.igor.finansee.view.components.TopBar
-import com.igor.finansee.view.screens.HomeScreen
-import com.igor.finansee.view.screens.PlansScreen
-import com.igor.finansee.view.screens.ProfileScreen
-import com.igor.finansee.view.screens.TransactionScreen
-import com.igor.finansee.view.theme.FinanSeeTheme
-import kotlinx.coroutines.launch
 import com.igor.finansee.data.models.userList
-import com.igor.finansee.view.screens.DailyReminderScreen
-import com.igor.finansee.view.screens.EmailSettingsScreen
-import com.igor.finansee.view.screens.NotificationSettingsScreen
-import com.igor.finansee.view.screens.SettingsScreen
+import com.igor.finansee.ui.components.BottomNavigationBar
+import com.igor.finansee.ui.components.CircularActionMenu
+import com.igor.finansee.ui.components.DrawerContent
+import com.igor.finansee.ui.components.TopBar
+import com.igor.finansee.ui.screens.*
+import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.SettingsViewModel
 import com.igor.finansee.viewmodels.SettingsViewModelFactory
-import androidx.compose.material3.FabPosition
-import androidx.compose.ui.unit.dp
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
-import androidx.compose.material3.DrawerValue
-import androidx.compose.runtime.collectAsState
+import com.igor.finansee.viewmodels.AuthViewModelFactory
+import kotlinx.coroutines.launch
+import com.igor.finansee.ui.theme.FinanSeeTheme
+import com.igor.finansee.navigation.NavAuth  // Importando a navegação que você criou
 
-import androidx.compose.ui.Modifier
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
-import com.igor.finansee.view.components.CircularActionMenu
-import com.igor.finansee.view.screens.AddAccountScreen
-import com.igor.finansee.view.screens.AddExpenseScreen
-import com.igor.finansee.view.screens.DonutChartScreen
+object Routes {
+    const val SPLASH = "splash_screen"
+    const val AUTO_CHOICE = "auto_choice"
+    const val LOGIN = "login"
+    const val SIGN_UP = "sign_up"
+    const val HOME = "home"
+    const val PROFILE = "profile"
+    const val PLANS = "plans"
+    const val DONUT_CHART = "donutChart"
+    const val ADD_EXPENSE = "add_expense"
+    const val EDIT_EXPENSE = "edit_expense"
+    const val TRANSACTIONS = "transactions"
+    const val SETTINGS = "settings"
+    const val NOTIFICATION_SETTINGS = "notification_settings"
+    const val EMAIL_SETTINGS = "email_settings"
+    const val DAILY_REMINDER = "daily_reminder"
+    const val FORGOT_PASSWORD = "forgot_password"
 
-import com.igor.finansee.view.screens.EditExpenseScreen
 
-/*class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            // Cria o NavController
-            val navController = rememberNavController()
-
-            // Surface é só pra ter background correto
-            Surface(color = MaterialTheme.colorScheme.background) {
-                // Chama seu NavGraph passando o navController
-                NavAuth(navController = navController)
-            }
-        }
-    }
-}*/
-
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,16 +71,30 @@ class MainActivity : ComponentActivity() {
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val scope = rememberCoroutineScope()
 
-            val currentUser = userList.first()
+            val currentUser = userList.first()  // Exemplo de usuário para inicializar a navegação
+
+            val authViewModel: AuthViewModel = viewModel(
+                factory = AuthViewModelFactory(AuthRepository())
+            )
 
             FinanSeeTheme(selectedTheme = uiState.themeOption) {
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     gesturesEnabled = true,
                     drawerContent = {
-                        DrawerContent(navController, onCloseDrawer = {
-                            scope.launch { drawerState.close() }
-                        },) { }
+                        DrawerContent(
+                            navController = navController,
+                            onCloseDrawer = {
+                                scope.launch { drawerState.close() }
+                            },
+                            onLogout = {
+                                authViewModel.logout()
+                                navController.navigate(Routes.LOGIN) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            },
+                            onSendNotification = {}
+                        )
                     },
                     content = {
                         var menuExpanded by remember { mutableStateOf(false) }
@@ -119,34 +121,50 @@ class MainActivity : ComponentActivity() {
                         ) { innerPadding ->
                             NavHost(
                                 navController = navController,
-                                startDestination = "home",
+                                startDestination = Routes.SPLASH,
                                 modifier = Modifier.padding(innerPadding)
                             ) {
-                                composable("home") { HomeScreen(navController, currentUser) }
-                                composable("profile") { ProfileScreen(navController, currentUser) }
-                                composable("profile") { ProfileScreen(navController, currentUser) }
-                                composable("plans") { PlansScreen(currentUser) }
-                                composable("donutChart") { DonutChartScreen() }
-                                composable("add_expense") { AddExpenseScreen(navController) }
-                                composable("edit_expense") { EditExpenseScreen() }
-                                composable("transactions") { TransactionScreen(currentUser) }
-                                composable(
-                                    route = "add_account_screen?initialTab={tab}",
-                                    arguments = listOf(navArgument("tab") {
-                                        type = NavType.StringType
-                                        defaultValue = "banco"
-                                    })
-                                ) { backStackEntry ->
-                                    val initialTab = backStackEntry.arguments?.getString("tab") ?: "banco"
+                                // AS CHAVES EXTRAS FORAM REMOVIDAS DAQUI
 
-                                    AddAccountScreen(
+                                composable(Routes.SPLASH) {
+                                    SplashScreen(navController, authViewModel)
+                                }
+
+                                NavAuth(navController, authViewModel)
+
+                                composable(Routes.HOME) {
+                                    HomeScreen(
                                         navController = navController,
-                                        currentUser = currentUser,
-                                        initialTab = initialTab
+                                        currentUser = currentUser
                                     )
                                 }
 
-                                composable("settings") {
+                                composable(Routes.PROFILE) {
+                                    ProfileScreen(navController, currentUser)
+                                }
+
+                                composable(Routes.PLANS) {
+                                    PlansScreen(currentUser)
+                                }
+
+                                composable(Routes.DONUT_CHART) {
+                                    DonutChartScreen()
+                                }
+
+                                composable(Routes.ADD_EXPENSE) {
+                                    AddExpenseScreen(navController)
+                                }
+
+                                composable(Routes.EDIT_EXPENSE) {
+                                    EditExpenseScreen()
+                                }
+
+                                composable(Routes.TRANSACTIONS) {
+                                    TransactionScreen(currentUser)
+                                }
+
+
+                                composable(Routes.SETTINGS) {
                                     val context = LocalContext.current
                                     val repository =
                                         remember { UserPreferencesRepository(context) }
@@ -161,7 +179,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
-                                composable("notification_settings") {
+                                composable(Routes.NOTIFICATION_SETTINGS) {
                                     val context = LocalContext.current
                                     val repository =
                                         remember { UserPreferencesRepository(context) }
@@ -172,13 +190,21 @@ class MainActivity : ComponentActivity() {
 
                                     NotificationSettingsScreen(
                                         onNavigateBack = { navController.popBackStack() },
-                                        onNavigateToEmailSettings = { navController.navigate("email_settings") },
-                                        onNavigateDailyReminder = { navController.navigate("daily_reminder") },
+                                        onNavigateToEmailSettings = {
+                                            navController.navigate(
+                                                Routes.EMAIL_SETTINGS
+                                            )
+                                        },
+                                        onNavigateDailyReminder = {
+                                            navController.navigate(
+                                                Routes.DAILY_REMINDER
+                                            )
+                                        },
                                         viewModel = settingsViewModel
                                     )
                                 }
 
-                                composable("email_settings") {
+                                composable(Routes.EMAIL_SETTINGS) {
                                     val context = LocalContext.current
                                     val repository =
                                         remember { UserPreferencesRepository(context) }
@@ -193,7 +219,9 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
-                                composable("daily_reminder") {
+
+
+                                composable(Routes.DAILY_REMINDER) {
                                     val context = LocalContext.current
                                     val repository =
                                         remember { UserPreferencesRepository(context) }

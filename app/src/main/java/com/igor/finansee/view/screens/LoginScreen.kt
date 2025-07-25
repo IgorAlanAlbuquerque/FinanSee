@@ -1,6 +1,9 @@
 package com.igor.finansee.view.screens
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,20 +28,23 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.igor.finansee.R
+import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.LoginScreenViewModel
 
 @Composable
 fun LoginScreen(
+    authViewModel: AuthViewModel,
     viewModel: LoginScreenViewModel = viewModel(),
     onNavigateToHome: () -> Unit,
-    onNavigateToSignUp: () -> Unit
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val uiState = viewModel.uiState.collectAsState().value
     val context = LocalContext.current
 
-    // ✅ Navegação ao sucesso
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             Toast.makeText(context, "Login realizado com sucesso!", Toast.LENGTH_SHORT).show()
@@ -46,6 +52,28 @@ fun LoginScreen(
         }
     }
 
+    val googleSignInClient = authViewModel.getGoogleSignInClient(context)
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val account = task.result
+            val idToken = account?.idToken
+
+            if (idToken != null) {
+                authViewModel.loginWithGoogle(idToken) { success ->
+                    if (success) {
+                        Toast.makeText(context, "Login com Google realizado com sucesso!", Toast.LENGTH_SHORT).show()
+                        onNavigateToHome()
+                    } else {
+                        Toast.makeText(context, "Falha no login com Google", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    // Interface do composable
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.background),
@@ -86,11 +114,22 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(20.dp))
                     LoginFooter(
                         onSignInClick = {
-                            onNavigateToHome()
+                            authViewModel.login(uiState.email, uiState.password) { success ->
+                                if (success) {
+                                    viewModel.setSuccess(true)
+                                } else {
+                                    viewModel.setError("Email ou senha inválidos")
+                                }
+                            }
                         },
-                        onSignUpClick = onNavigateToSignUp
+                        onSignUpClick = onNavigateToSignUp,
+                        onForgotPasswordClick = onNavigateToForgotPassword,
+                        onGoogleLoginClick = {
+                            val signInIntent = googleSignInClient.signInIntent
+                            launcher.launch(signInIntent)
+                        },
+                        isLoginEnabled = uiState.email.isNotBlank()
                     )
-
                     if (uiState.isLoading) {
                         Spacer(modifier = Modifier.height(16.dp))
                         CircularProgressIndicator()
@@ -105,6 +144,7 @@ fun LoginScreen(
         }
     }
 }
+
 
 @Composable
 fun LoginHeader() {
@@ -164,7 +204,10 @@ fun LoginFields(
 @Composable
 fun LoginFooter(
     onSignInClick: () -> Unit,
-    onSignUpClick: () -> Unit
+    onSignUpClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit,
+    onGoogleLoginClick: () -> Unit,
+    isLoginEnabled: Boolean
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Button(
@@ -180,11 +223,23 @@ fun LoginFooter(
             Text(text = "Não tem uma conta? Cadastre-se")
         }
 
-        TextButton(onClick = { /* Implementar recuperação de senha */ }) {
+        TextButton(onClick = onForgotPasswordClick, enabled = isLoginEnabled) {
             Text(text = "Esqueci minha senha")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onGoogleLoginClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Login com Google")
         }
     }
 }
+
+
+
 
 @Composable
 fun CustomTextField(
