@@ -4,9 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.igor.finansee.data.models.User
 import com.igor.finansee.data.models.userList
-import com.igor.finansee.ui.screens.*
+import com.igor.finansee.view.screens.*
 
 object Routes {
     const val AUTO_CHOICE = "auto_choice"

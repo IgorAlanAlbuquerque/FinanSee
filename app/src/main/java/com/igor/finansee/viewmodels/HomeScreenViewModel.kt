@@ -2,16 +2,15 @@ package com.igor.finansee.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.igor.finansee.data.daos.BankAccountDao
-import com.igor.finansee.data.daos.CategoryDao
-import com.igor.finansee.data.daos.CreditCardDao
-import com.igor.finansee.data.daos.FaturaCreditCardDao
-import com.igor.finansee.data.daos.MonthPlanningDao
-import com.igor.finansee.data.daos.TransactionDao
-import com.igor.finansee.data.daos.CategoryExpenseResult
 import com.igor.finansee.data.models.*
+import com.igor.finansee.data.repository.BankAccountRepository
+import com.igor.finansee.data.repository.CategoryRepository
+import com.igor.finansee.data.repository.CreditCardRepository
+import com.igor.finansee.data.repository.FaturaCreditCardRepository
+import com.igor.finansee.data.repository.MonthPlanningRepository
+import com.igor.finansee.data.repository.TransactionRepository
 import com.igor.finansee.data.states.HomeScreenUiState
-import com.igor.finansee.ui.screens.CategoryWithAmount
+import com.igor.finansee.view.screens.CategoryWithAmount
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,24 +38,33 @@ private data class StaticData(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeScreenViewModel(
-    private val bankAccountDao: BankAccountDao,
-    private val creditCardDao: CreditCardDao,
-    private val faturaDao: FaturaCreditCardDao,
-    private val transactionDao: TransactionDao,
-    private val planningDao: MonthPlanningDao,
-    private val categoryDao: CategoryDao,
+    private val transactionRepository: TransactionRepository,
+    private val planningRepository: MonthPlanningRepository,
+    private val faturaRepository: FaturaCreditCardRepository,
+    private val creditCardRepository: CreditCardRepository,
+    private val bankAccountRepository: BankAccountRepository,
+    private val categoryRepository: CategoryRepository,
     private val currentUser: User
 ) : ViewModel() {
+
+    init {
+        transactionRepository.startListeningForRemoteChanges()
+        planningRepository.startListeningForRemoteChanges()
+        creditCardRepository.startListeningForRemoteChanges()
+        faturaRepository.startListeningForRemoteChanges()
+        bankAccountRepository.startListeningForRemoteChanges()
+        categoryRepository.startListeningForRemoteChanges()
+    }
 
     private val _selectedMonth = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
     private val _showBalance = MutableStateFlow(true)
     private val expenseTypes = listOf(TransactionType.EXPENSE, TransactionType.CREDIT_CARD_EXPENSE)
 
     private val _staticDataFlow = combine(
-        bankAccountDao.getOverallBalanceForUser(currentUser.id),
-        bankAccountDao.getAccountsForUser(currentUser.id),
-        creditCardDao.getCardsForUser(currentUser.id),
-        categoryDao.getAllCategories()
+        bankAccountRepository.getOverallBalanceFromRoom(),
+        bankAccountRepository.getAccountsFromRoom(),
+        creditCardRepository.getCardsFromRoom(),
+        categoryRepository.getCategoriesFromRoom()
     ) { balance, accounts, cards, categories ->
         StaticData(
             balance = balance ?: 0.0,
@@ -65,6 +73,7 @@ class HomeScreenViewModel(
             categories = categories
         )
     }
+
     private val _monthlyDataFlow: Flow<MonthlyData> = _selectedMonth.flatMapLatest { month ->
         createMonthlyDataFlow(month)
     }
@@ -99,15 +108,19 @@ class HomeScreenViewModel(
         )
     )
 
-    private fun createMonthlyDataFlow(month: LocalDate) = combine(
-        transactionDao.getSumByTypesForPeriod(currentUser.id, listOf(TransactionType.INCOME), month, month.plusMonths(1)),
-        transactionDao.getSumByTypesForPeriod(currentUser.id, expenseTypes, month, month.plusMonths(1)),
-        faturaDao.getFaturasForUserInPeriod(currentUser.id, month, month.plusMonths(1)),
-        transactionDao.getExpensesGroupedByCategory(currentUser.id, month, month.plusMonths(1), expenseTypes),
-        planningDao.getPlanningForUserInPeriod(currentUser.id, month, month.plusMonths(1))
-    ) { income, directExpenses, faturas, expensesByCategory, planning ->
-        val totalExpenses = (directExpenses ?: 0.0) + faturas.sumOf { it.valor }
-        MonthlyData(income ?: 0.0, totalExpenses, faturas, expensesByCategory, planning)
+    private fun createMonthlyDataFlow(month: LocalDate): Flow<MonthlyData> {
+        val startDate = month
+        val endDate = month.plusMonths(1)
+        return combine(
+            transactionRepository.getSumByTypesForPeriod(listOf(TransactionType.INCOME), startDate, endDate),
+            transactionRepository.getSumByTypesForPeriod(expenseTypes, startDate, endDate),
+            faturaRepository.getFaturasFromRoom(startDate, endDate),
+            transactionRepository.getExpensesGroupedByCategory(expenseTypes, startDate, endDate),
+            planningRepository.getPlanningFromRoom(startDate, endDate)
+        ) { income, directExpenses, faturas, expensesByCategory, planning ->
+            val totalExpenses = (directExpenses ?: 0.0) + faturas.sumOf { it.valor }
+            MonthlyData(income ?: 0.0, totalExpenses, faturas, expensesByCategory, planning)
+        }
     }
 
     private fun mapCategoryExpenses(results: List<CategoryExpenseResult>, categories: List<Category>): List<CategoryWithAmount> {
@@ -120,4 +133,14 @@ class HomeScreenViewModel(
     fun toggleBalanceVisibility() { _showBalance.value = !_showBalance.value }
     fun selectNextMonth() { _selectedMonth.value = _selectedMonth.value.plusMonths(1) }
     fun selectPreviousMonth() { _selectedMonth.value = _selectedMonth.value.minusMonths(1) }
+
+    override fun onCleared() {
+        super.onCleared()
+        transactionRepository.cancelScope()
+        planningRepository.cancelScope()
+        creditCardRepository.cancelScope()
+        faturaRepository.cancelScope()
+        bankAccountRepository.cancelScope()
+        categoryRepository.cancelScope()
+    }
 }

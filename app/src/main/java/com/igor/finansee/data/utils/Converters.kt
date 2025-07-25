@@ -7,6 +7,7 @@ import com.igor.finansee.data.models.Category // Supondo que Category seja um en
 import com.igor.finansee.data.models.PlannedCategorySpending
 import com.igor.finansee.data.models.TransactionType
 import java.time.LocalDate
+import java.util.Date
 import java.util.UUID
 
 class Converters {
@@ -55,5 +56,15 @@ class Converters {
         }
         val listType = object : TypeToken<List<PlannedCategorySpending>>() {}.type
         return Gson().fromJson(planString, listType)
+    }
+
+    @TypeConverter
+    fun fromTimestamp(value: Long?): Date? {
+        return value?.let { Date(it) }
+    }
+
+    @TypeConverter
+    fun dateToTimestamp(date: Date?): Long? {
+        return date?.time
     }
 }

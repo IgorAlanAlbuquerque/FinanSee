@@ -16,20 +16,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.igor.finansee.data.datastore.UserPreferencesRepository
-import com.igor.finansee.ui.components.BottomNavigationBar
-import com.igor.finansee.ui.components.DrawerContent
-import com.igor.finansee.ui.components.TopBar
-import com.igor.finansee.ui.screens.HomeScreen
-import com.igor.finansee.ui.screens.PlansScreen
-import com.igor.finansee.ui.screens.ProfileScreen
-import com.igor.finansee.ui.screens.TransactionScreen
-import com.igor.finansee.ui.theme.FinanSeeTheme
+import com.igor.finansee.view.components.BottomNavigationBar
+import com.igor.finansee.view.components.DrawerContent
+import com.igor.finansee.view.components.TopBar
+import com.igor.finansee.view.screens.HomeScreen
+import com.igor.finansee.view.screens.PlansScreen
+import com.igor.finansee.view.screens.ProfileScreen
+import com.igor.finansee.view.screens.TransactionScreen
+import com.igor.finansee.view.theme.FinanSeeTheme
 import kotlinx.coroutines.launch
 import com.igor.finansee.data.models.userList
-import com.igor.finansee.ui.screens.DailyReminderScreen
-import com.igor.finansee.ui.screens.EmailSettingsScreen
-import com.igor.finansee.ui.screens.NotificationSettingsScreen
-import com.igor.finansee.ui.screens.SettingsScreen
+import com.igor.finansee.view.screens.DailyReminderScreen
+import com.igor.finansee.view.screens.EmailSettingsScreen
+import com.igor.finansee.view.screens.NotificationSettingsScreen
+import com.igor.finansee.view.screens.SettingsScreen
 import com.igor.finansee.viewmodels.SettingsViewModel
 import com.igor.finansee.viewmodels.SettingsViewModelFactory
 import androidx.compose.material3.FabPosition
@@ -45,12 +45,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.igor.finansee.ui.components.CircularActionMenu
-import com.igor.finansee.ui.screens.AddAccountScreen
-import com.igor.finansee.ui.screens.AddExpenseScreen
-import com.igor.finansee.ui.screens.DonutChartScreen
+import com.igor.finansee.view.components.CircularActionMenu
+import com.igor.finansee.view.screens.AddAccountScreen
+import com.igor.finansee.view.screens.AddExpenseScreen
+import com.igor.finansee.view.screens.DonutChartScreen
 
-import com.igor.finansee.ui.screens.EditExpenseScreen
+import com.igor.finansee.view.screens.EditExpenseScreen
 
 /*class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
