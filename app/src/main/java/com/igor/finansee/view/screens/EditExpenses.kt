@@ -1,5 +1,6 @@
 package com.igor.finansee.view.screens
 
+import ExpenseScreenViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -13,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.models.*
-import com.igor.finansee.viewmodels.ExpenseScreenViewModel
 import java.util.UUID
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.ui.platform.LocalContext

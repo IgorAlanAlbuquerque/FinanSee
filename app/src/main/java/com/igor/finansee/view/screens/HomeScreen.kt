@@ -69,6 +69,7 @@ import com.igor.finansee.data.models.FaturaCreditCard
 import com.igor.finansee.data.models.MonthPlanning
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.AppDatabase
+import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.models.User
 import com.igor.finansee.view.theme.*
 import com.igor.finansee.viewmodels.HomeScreenViewModel
@@ -87,8 +88,12 @@ data class CategoryWithAmount(
 @Composable
 fun HomeScreen(
     navController: NavHostController,
-    currentUser: User,
+    viewModel: HomeScreenViewModel = viewModel()
+
+
 ) {
+    val currentUser by viewModel.currentUser.collectAsState()
+
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val bankAccountDao = db.bankAccountDao()
@@ -97,6 +102,8 @@ fun HomeScreen(
     val transactionDao = db.transactionDao()
     val planningDao = db.monthPlanningDao()
     val categoryDao = db.categoryDao()
+    val userDao = db.userDao()
+    val authRepository = AuthRepository(userDao)
 
     val factory = HomeScreenViewModelFactory(
         bankAccountDao = bankAccountDao,
@@ -105,11 +112,10 @@ fun HomeScreen(
         transactionDao = transactionDao,
         planningDao = planningDao,
         categoryDao = categoryDao,
-        user = currentUser
+        authRepository = authRepository
     )
 
     val viewModel: HomeScreenViewModel = viewModel(factory = factory)
-
     val uiState by viewModel.uiState.collectAsState()
 
     LazyColumn(
@@ -181,7 +187,7 @@ fun HomeScreen(
             uiState.currentMonthPlanning?.let {
                 MonthPlan(
                     selectedDate = uiState.selectedDate,
-                    currentUser = currentUser,
+                    currentUser = uiState.user ?: return@let,
                     actualTotalExpenses = uiState.expensesForSelectedMonth,
                     actualExpensesByCategory = uiState.expensesByCategory,
                     allCategories = uiState.allCategories,
@@ -191,6 +197,7 @@ fun HomeScreen(
         }
     }
 }
+
 
 
 @Composable
