@@ -20,6 +20,7 @@ import java.util.Date
 data class Expense(
     @PrimaryKey
     val id: UUID = UUID.randomUUID(),
+    val userId: String,
     val descricao: String,
     val valor: Double,
     val categoryId: Int?,

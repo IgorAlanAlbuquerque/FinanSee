@@ -2,6 +2,7 @@ package com.igor.finansee.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.models.*
 import com.igor.finansee.data.repository.BankAccountRepository
 import com.igor.finansee.data.repository.CategoryRepository
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 private data class MonthlyData(
@@ -44,10 +46,19 @@ class HomeScreenViewModel(
     private val creditCardRepository: CreditCardRepository,
     private val bankAccountRepository: BankAccountRepository,
     private val categoryRepository: CategoryRepository,
-    private val currentUser: User
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
+    private val _currentUser = MutableStateFlow<User?>(null)
+    val currentUser: StateFlow<User?> = _currentUser
+
+
     init {
+        viewModelScope.launch {
+            _currentUser.value = authRepository.getCurrentLocalUser()
+        }
+
+
         transactionRepository.startListeningForRemoteChanges()
         planningRepository.startListeningForRemoteChanges()
         creditCardRepository.startListeningForRemoteChanges()
@@ -79,13 +90,17 @@ class HomeScreenViewModel(
     }
 
     val uiState: StateFlow<HomeScreenUiState> = combine(
+        _currentUser,
         _selectedMonth,
         _showBalance,
         _staticDataFlow,
         _monthlyDataFlow
-    ) { month, showBalance, staticData, monthlyData ->
+    ) { currentUser, month, showBalance, staticData, monthlyData ->
+        val userName = currentUser?.name?.split(" ")?.firstOrNull() ?: "Utilizador"
+
         HomeScreenUiState(
-            userName = currentUser.name.split(" ").firstOrNull() ?: "",
+            user = currentUser,
+            userName = userName,
             selectedDate = month,
             showBalance = showBalance,
             totalAccountBalance = staticData.balance,
@@ -103,7 +118,6 @@ class HomeScreenViewModel(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
         initialValue = HomeScreenUiState(
-            userName = currentUser.name.split(" ").firstOrNull() ?: "",
             selectedDate = _selectedMonth.value
         )
     )

@@ -1,95 +1,110 @@
-package com.igor.finansee.viewmodels
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.igor.finansee.data.AuthRepository
+import com.igor.finansee.data.daos.CategoryDao
+import com.igor.finansee.data.daos.ExpenseDao
 import com.igor.finansee.data.models.Category
 import com.igor.finansee.data.models.Expense
-import com.igor.finansee.data.repository.CategoryRepository
-import com.igor.finansee.data.repository.ExpenseRepository
-import com.igor.finansee.data.states.ExpenseScreenUiState
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import com.igor.finansee.data.models.ExpenseWithCategory
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.UUID
 
-@OptIn(ExperimentalCoroutinesApi::class)
+data class ExpenseUiState(
+    val expenses: List<ExpenseWithCategory> = emptyList(),
+    val selectedMonth: LocalDate = LocalDate.now().withDayOfMonth(1),
+    val isLoading: Boolean = false
+)
+
 class ExpenseScreenViewModel(
-    private val expenseRepository: ExpenseRepository,
-    private val categoryRepository: CategoryRepository
+    private val expenseDao: ExpenseDao,
+    private val categoryDao: CategoryDao,
+    private val authRepository: AuthRepository
+
 ) : ViewModel() {
 
     private val _selectedMonth = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
 
+    private val _uiState = MutableStateFlow(ExpenseUiState(isLoading = true))
+    val uiState: StateFlow<ExpenseUiState> = _uiState.asStateFlow()
+
+    val categories: StateFlow<List<Category>> = categoryDao.getAllCategories()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     init {
-        expenseRepository.startListeningForRemoteChanges()
-        categoryRepository.startListeningForRemoteChanges()
+        viewModelScope.launch {
+            _selectedMonth.collectLatest { month ->
+                _uiState.update { it.copy(isLoading = true) }
+
+                val start = month
+                val end = month.plusMonths(1)
+                val expensesFlow = expenseDao.getExpensesWithCategoryBetween(start, end)
+
+                expensesFlow.collect { expenses ->
+                    _uiState.update {
+                        it.copy(
+                            expenses = expenses,
+                            selectedMonth = month,
+                            isLoading = false
+                        )
+                    }
+                }
+            }
+        }
     }
 
-    val uiState: StateFlow<ExpenseScreenUiState> = _selectedMonth.flatMapLatest { month ->
-        val startDate = month
-        val endDate = month.plusMonths(1)
+    fun updateExpense(
+        id: UUID,
+        descricao: String,
+        valor: Double,
+        categoryId: Int?,
+        data: LocalDate
+    ) {
+        viewModelScope.launch {
+            val userId = authRepository.getCurrentLocalUser()?.id?.toString() ?: return@launch
+            val updatedExpense = Expense(
+                id = id,
+                userId = userId,
+                descricao = descricao,
+                valor = valor,
+                categoryId = categoryId,
+                data = data
+            )
 
-        expenseRepository.getExpensesFromRoom(startDate, endDate)
-            .map { expensesWithCategory ->
-                ExpenseScreenUiState(
-                    selectedMonth = month,
-                    expenses = expensesWithCategory,
-                    totalExpenses = expensesWithCategory.sumOf { it.expense.valor },
-                    isLoading = false
-                )
-            }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000L),
-        initialValue = ExpenseScreenUiState(isLoading = true)
-    )
+            expenseDao.upsertExpense(updatedExpense)
+        }
+    }
 
-    val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesFromRoom()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000L),
-            initialValue = emptyList()
-        )
+
+    fun deleteExpense(expense: Expense) {
+        viewModelScope.launch {
+            expenseDao.deleteExpense(expense)
+        }
+    }
+    fun selectPreviousMonth() {
+        _selectedMonth.value = _selectedMonth.value.minusMonths(1)
+    }
 
     fun selectNextMonth() {
         _selectedMonth.value = _selectedMonth.value.plusMonths(1)
     }
 
-    fun selectPreviousMonth() {
-        _selectedMonth.value = _selectedMonth.value.minusMonths(1)
-    }
-
     fun addExpense(descricao: String, valor: Double, categoryId: Int?, data: LocalDate) {
         viewModelScope.launch {
-            val newExpense = Expense(descricao = descricao, valor = valor, categoryId = categoryId, data = data)
-            expenseRepository.saveExpense(newExpense)
-        }
-    }
+            val userId = authRepository.getFirebaseUserId()
 
-    fun updateExpense(expenseId: UUID, descricao: String, valor: Double, categoryId: Int?, data: LocalDate) {
-        viewModelScope.launch {
-            val expenseToUpdate = Expense(expenseId, descricao, valor, categoryId, data)
-            expenseRepository.saveExpense(expenseToUpdate)
-        }
-    }
-
-    fun deleteExpense(expenseId: UUID) {
-        viewModelScope.launch {
-            expenseRepository.getExpenseById(expenseId)?.let { expenseToDelete ->
-                expenseRepository.deleteExpense(expenseToDelete)
+            if (userId != null && categoryId != null) {
+                val novaDespesa = Expense(
+                    userId = userId,
+                    descricao = descricao,
+                    valor = valor,
+                    categoryId = categoryId,
+                    data = data
+                )
+                expenseDao.upsertExpense(novaDespesa)
             }
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        expenseRepository.cancelScope()
-        categoryRepository.cancelScope()
-    }
 }

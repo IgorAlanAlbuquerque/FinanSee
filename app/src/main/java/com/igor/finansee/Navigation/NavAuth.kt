@@ -1,5 +1,6 @@
 package com.igor.finansee.navigation
 
+
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -11,7 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.igor.finansee.Routes
 import com.igor.finansee.data.models.User
-import com.igor.finansee.ui.screens.*
+import com.igor.finansee.view.screens.*
 import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.LoginScreenViewModel
 import kotlinx.coroutines.launch

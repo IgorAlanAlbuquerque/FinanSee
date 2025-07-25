@@ -1,4 +1,4 @@
-package com.igor.finansee.ui.screens
+package com.igor.finansee.view.screens
 
 import android.util.Patterns
 import android.widget.Toast

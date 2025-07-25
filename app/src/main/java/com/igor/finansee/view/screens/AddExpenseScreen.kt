@@ -1,5 +1,6 @@
-package com.igor.finansee.view.screens
+package com.igor.finansee.ui.screens
 
+import ExpenseScreenViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -11,8 +12,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.igor.finansee.data.AppDatabase
+import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.models.Category
-import com.igor.finansee.viewmodels.ExpenseScreenViewModel
 import com.igor.finansee.viewmodels.ExpenseScreenViewModelFactory
 import java.time.LocalDate
 
@@ -21,7 +22,10 @@ import java.time.LocalDate
 fun AddExpenseScreen(navController: NavHostController) {
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
-    val factory = ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao())
+
+    val authRepository = AuthRepository(db.userDao())
+
+    val factory = ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao(), authRepository)
     val viewModel: ExpenseScreenViewModel = viewModel(factory = factory)
 
     val categoryList by viewModel.categories.collectAsState()

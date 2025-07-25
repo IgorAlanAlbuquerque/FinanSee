@@ -5,10 +5,12 @@ import com.igor.finansee.data.models.CreditCard
 import com.igor.finansee.data.models.Category
 import com.igor.finansee.data.models.FaturaCreditCard
 import com.igor.finansee.data.models.MonthPlanning
+import com.igor.finansee.data.models.User
 import com.igor.finansee.view.screens.CategoryWithAmount
 import java.time.LocalDate
 
 data class HomeScreenUiState(
+    val user: User? = null,
     val userName: String = "",
     val showBalance: Boolean = true,
     val selectedDate: LocalDate = LocalDate.now(),
