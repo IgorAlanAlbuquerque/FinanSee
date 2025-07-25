@@ -17,24 +17,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.datastore.UserPreferencesRepository
-import com.igor.finansee.data.models.userList
-import com.igor.finansee.ui.components.BottomNavigationBar
-import com.igor.finansee.ui.components.CircularActionMenu
-import com.igor.finansee.ui.components.DrawerContent
-import com.igor.finansee.ui.components.TopBar
-import com.igor.finansee.ui.screens.*
 import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.SettingsViewModel
 import com.igor.finansee.viewmodels.SettingsViewModelFactory
 import com.igor.finansee.viewmodels.AuthViewModelFactory
 import kotlinx.coroutines.launch
-import com.igor.finansee.ui.theme.FinanSeeTheme
-import com.igor.finansee.navigation.NavAuth  // Importando a navegação que você criou
+import com.igor.finansee.navigation.NavAuth
+import com.igor.finansee.view.screens.SplashScreen
+import com.igor.finansee.view.components.BottomNavigationBar
+import com.igor.finansee.view.components.CircularActionMenu
+import com.igor.finansee.view.components.DrawerContent
+import com.igor.finansee.view.components.TopBar
+import com.igor.finansee.view.screens.AddAccountScreen
+import com.igor.finansee.view.screens.AddExpenseScreen
+import com.igor.finansee.view.screens.DailyReminderScreen
+import com.igor.finansee.view.screens.DonutChartScreen
+import com.igor.finansee.view.screens.EditExpenseScreen
+import com.igor.finansee.view.screens.EmailSettingsScreen
+import com.igor.finansee.view.screens.HomeScreen
+import com.igor.finansee.view.screens.NotificationSettingsScreen
+import com.igor.finansee.view.screens.PlansScreen
+import com.igor.finansee.view.screens.ProfileScreen
+import com.igor.finansee.view.screens.SettingsScreen
+import com.igor.finansee.view.screens.TransactionScreen
+import com.igor.finansee.view.theme.FinanSeeTheme
 
 object Routes {
     const val SPLASH = "splash_screen"
@@ -71,7 +84,7 @@ class MainActivity : ComponentActivity() {
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val scope = rememberCoroutineScope()
 
-            val currentUser = userList.first()  // Exemplo de usuário para inicializar a navegação
+            val currentUser = null
 
             val authViewModel: AuthViewModel = viewModel(
                 factory = AuthViewModelFactory(AuthRepository())
@@ -124,7 +137,6 @@ class MainActivity : ComponentActivity() {
                                 startDestination = Routes.SPLASH,
                                 modifier = Modifier.padding(innerPadding)
                             ) {
-                                // AS CHAVES EXTRAS FORAM REMOVIDAS DAQUI
 
                                 composable(Routes.SPLASH) {
                                     SplashScreen(navController, authViewModel)
@@ -233,6 +245,22 @@ class MainActivity : ComponentActivity() {
                                     DailyReminderScreen(
                                         onNavigateBack = { navController.popBackStack() },
                                         viewModel = settingsViewModel
+                                    )
+                                }
+
+                                composable(
+                                    route = "add_account_screen?initialTab={tab}",
+                                    arguments = listOf(navArgument("tab") {
+                                        type = NavType.StringType
+                                        defaultValue = "banco"
+                                    })
+                                ) { backStackEntry ->
+                                    val initialTab = backStackEntry.arguments?.getString("tab") ?: "banco"
+
+                                    AddAccountScreen(
+                                        navController = navController,
+                                        currentUser = currentUser,
+                                        initialTab = initialTab
                                     )
                                 }
                             }

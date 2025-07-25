@@ -1,9 +1,5 @@
-<<<<<<< HEAD:app/src/main/java/com/igor/finansee/ui/screens/SignUpScreen.kt
-package com.igor.finansee.ui.screens
-=======
 package com.igor.finansee.view.screens
 
->>>>>>> upstream/main:app/src/main/java/com/igor/finansee/view/screens/SignUpScreen.kt
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
