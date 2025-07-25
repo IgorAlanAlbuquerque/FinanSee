@@ -5,7 +5,7 @@ import com.igor.finansee.data.models.CreditCard
 import com.igor.finansee.data.models.Category
 import com.igor.finansee.data.models.FaturaCreditCard
 import com.igor.finansee.data.models.MonthPlanning
-import com.igor.finansee.ui.screens.CategoryWithAmount
+import com.igor.finansee.view.screens.CategoryWithAmount
 import java.time.LocalDate
 
 data class HomeScreenUiState(

@@ -5,6 +5,8 @@ import java.util.UUID
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import com.google.firebase.firestore.ServerTimestamp
+import java.util.Date
 
 @Entity(
     tableName = "expense",
@@ -21,7 +23,9 @@ data class Expense(
     val descricao: String,
     val valor: Double,
     val categoryId: Int?,
-    val data: LocalDate
+    val data: LocalDate,
+    @ServerTimestamp
+    val lastUpdated: Date? = null
 ) {
     val monthYear: LocalDate
         get() = data.withDayOfMonth(1)

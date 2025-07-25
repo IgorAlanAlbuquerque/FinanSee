@@ -2,19 +2,23 @@ package com.igor.finansee.data.daos
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Upsert
+import com.igor.finansee.data.models.CategoryExpenseResult
 import com.igor.finansee.data.models.Transaction
 import com.igor.finansee.data.models.TransactionType
+import com.igor.finansee.data.models.TransactionWithCategory
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
 @Dao
 interface TransactionDao {
+    @androidx.room.Transaction
     @Query("""
         SELECT * FROM transactions
         WHERE userId = :userId AND date >= :startDate AND date < :endDate
         ORDER BY date DESC
     """)
-    fun getTransactionsForPeriod(userId: Int, startDate: LocalDate, endDate: LocalDate): Flow<List<Transaction>>
+    fun getTransactionsForPeriod(userId: Int?, startDate: LocalDate, endDate: LocalDate): Flow<List<TransactionWithCategory>>
 
     @Query("""
         SELECT SUM(value) FROM transactions
@@ -28,9 +32,7 @@ interface TransactionDao {
         GROUP BY categoryId
     """)
     fun getExpensesGroupedByCategory(userId: Int, startDate: LocalDate, endDate: LocalDate, expenseTypes: List<TransactionType>): Flow<List<CategoryExpenseResult>>
-}
 
-data class CategoryExpenseResult(
-    val categoryId: Int,
-    val totalAmount: Double
-)
+    @Upsert
+    suspend fun upsertTransaction(transaction: Transaction)
+}

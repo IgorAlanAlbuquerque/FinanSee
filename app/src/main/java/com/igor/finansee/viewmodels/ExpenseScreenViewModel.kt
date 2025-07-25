@@ -2,10 +2,10 @@ package com.igor.finansee.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.igor.finansee.data.daos.CategoryDao
-import com.igor.finansee.data.daos.ExpenseDao
 import com.igor.finansee.data.models.Category
 import com.igor.finansee.data.models.Expense
+import com.igor.finansee.data.repository.CategoryRepository
+import com.igor.finansee.data.repository.ExpenseRepository
 import com.igor.finansee.data.states.ExpenseScreenUiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,19 +18,25 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.UUID
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ExpenseScreenViewModel(
-    private val expenseDao: ExpenseDao,
-    private val categoryDao: CategoryDao
-) : ViewModel(){
+    private val expenseRepository: ExpenseRepository,
+    private val categoryRepository: CategoryRepository
+) : ViewModel() {
+
     private val _selectedMonth = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
 
-    @OptIn(ExperimentalCoroutinesApi::class)
+    init {
+        expenseRepository.startListeningForRemoteChanges()
+        categoryRepository.startListeningForRemoteChanges()
+    }
+
     val uiState: StateFlow<ExpenseScreenUiState> = _selectedMonth.flatMapLatest { month ->
         val startDate = month
         val endDate = month.plusMonths(1)
 
-        expenseDao.getExpensesForPeriod(startDate, endDate)
-            .map{ expensesWithCategory ->
+        expenseRepository.getExpensesFromRoom(startDate, endDate)
+            .map { expensesWithCategory ->
                 ExpenseScreenUiState(
                     selectedMonth = month,
                     expenses = expensesWithCategory,
@@ -44,7 +50,7 @@ class ExpenseScreenViewModel(
         initialValue = ExpenseScreenUiState(isLoading = true)
     )
 
-    val categories: StateFlow<List<Category>> = categoryDao.getAllCategories()
+    val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesFromRoom()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000L),
@@ -62,22 +68,28 @@ class ExpenseScreenViewModel(
     fun addExpense(descricao: String, valor: Double, categoryId: Int?, data: LocalDate) {
         viewModelScope.launch {
             val newExpense = Expense(descricao = descricao, valor = valor, categoryId = categoryId, data = data)
-            expenseDao.upsertExpense(newExpense)
+            expenseRepository.saveExpense(newExpense)
         }
     }
 
     fun updateExpense(expenseId: UUID, descricao: String, valor: Double, categoryId: Int?, data: LocalDate) {
         viewModelScope.launch {
             val expenseToUpdate = Expense(expenseId, descricao, valor, categoryId, data)
-            expenseDao.upsertExpense(expenseToUpdate)
+            expenseRepository.saveExpense(expenseToUpdate)
         }
     }
 
     fun deleteExpense(expenseId: UUID) {
         viewModelScope.launch {
-            expenseDao.getExpenseById(expenseId)?.let { expenseToDelete ->
-                expenseDao.deleteExpense(expenseToDelete)
+            expenseRepository.getExpenseById(expenseId)?.let { expenseToDelete ->
+                expenseRepository.deleteExpense(expenseToDelete)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        expenseRepository.cancelScope()
+        categoryRepository.cancelScope()
     }
 }

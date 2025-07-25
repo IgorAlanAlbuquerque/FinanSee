@@ -2,10 +2,11 @@ package com.igor.finansee.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.igor.finansee.data.daos.MonthPlanningDao
-import com.igor.finansee.data.daos.TransactionDao
+import com.igor.finansee.data.models.MonthPlanning
 import com.igor.finansee.data.models.TransactionType
-import com.igor.finansee.data.models.User
+import com.igor.finansee.data.repository.CategoryRepository
+import com.igor.finansee.data.repository.MonthPlanningRepository
+import com.igor.finansee.data.repository.TransactionRepository
 import com.igor.finansee.data.states.CategoryPlanWithProgress
 import com.igor.finansee.data.states.PlansScreenUiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,29 +16,36 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlansScreenViewModel(
-    private val planningDao: MonthPlanningDao,
-    private val transactionDao: TransactionDao,
-    private val currentUser: User
+    private val planningRepository: MonthPlanningRepository,
+    private val transactionRepository: TransactionRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val _selectedDate = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
-
     private val expenseTypes = listOf(TransactionType.EXPENSE, TransactionType.CREDIT_CARD_EXPENSE)
+
+    init {
+        planningRepository.startListeningForRemoteChanges()
+        transactionRepository.startListeningForRemoteChanges()
+        categoryRepository.startListeningForRemoteChanges()
+    }
 
     val uiState: StateFlow<PlansScreenUiState> = _selectedDate.flatMapLatest { date ->
         val startDate = date
         val endDate = date.plusMonths(1)
 
         combine(
-            planningDao.getPlanningForUserInPeriod(currentUser.id, startDate, endDate),
-            transactionDao.getExpensesGroupedByCategory(currentUser.id, startDate, endDate, expenseTypes)
-        ) { planning, actualSpendingResults ->
+            planningRepository.getPlanningFromRoom(startDate, endDate),
+            transactionRepository.getExpensesGroupedByCategory(expenseTypes, startDate, endDate),
+            categoryRepository.getCategoriesFromRoom()
+        ) { planning, actualSpendingResults, allCategories ->
 
             var planDetails = listOf<CategoryPlanWithProgress>()
 
@@ -46,13 +54,15 @@ class PlansScreenViewModel(
                     val actualSpending = actualSpendingResults
                         .find { it.categoryId == categoryPlan.categoryId }?.totalAmount ?: 0.0
 
+                    val categoryName = allCategories.find { it.id == categoryPlan.categoryId }?.name ?: "Desconhecida"
+
                     val progress = if (categoryPlan.plannedAmount > 0) {
                         (actualSpending / categoryPlan.plannedAmount).toFloat()
-                    } else 0f
+                    } else if (actualSpending > 0) 1f else 0f
 
                     CategoryPlanWithProgress(
                         categoryId = categoryPlan.categoryId,
-                        categoryName = "Categoria ${categoryPlan.categoryId}",
+                        categoryName = categoryName, // Usa o nome real da categoria
                         plannedAmount = categoryPlan.plannedAmount,
                         actualAmount = actualSpending,
                         progress = progress.coerceIn(0f, 1f)
@@ -84,5 +94,18 @@ class PlansScreenViewModel(
 
     fun selectPreviousMonth() {
         _selectedDate.value = _selectedDate.value.minusMonths(1)
+    }
+
+    fun savePlanning(planning: MonthPlanning) {
+        viewModelScope.launch {
+            planningRepository.savePlanning(planning)
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        planningRepository.cancelScope()
+        transactionRepository.cancelScope()
+        categoryRepository.cancelScope()
     }
 }

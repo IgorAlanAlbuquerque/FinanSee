@@ -92,6 +92,7 @@ dependencies {
     // --- Other Libraries ---
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("com.google.code.gson:gson:2.10.1")
+<<<<<<< HEAD
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
@@ -103,4 +104,9 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
+=======
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore.ktx)
+>>>>>>> upstream/main
 }
