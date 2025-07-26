@@ -12,7 +12,7 @@ import com.igor.finansee.R
 import com.igor.finansee.data.daos.UserDao
 import com.igor.finansee.data.models.User
 import kotlinx.coroutines.tasks.await
-import java.time.LocalDate
+import java.util.Date
 
 class AuthRepository(
     private val userDao: UserDao,
@@ -30,8 +30,8 @@ class AuthRepository(
                 id = firebaseUser.uid,
                 name = name,
                 email = email,
-                registrationDate = LocalDate.now(),
-                statusPremium = false
+                statusPremium = false,
+                registrationTimestamp = Date()
             )
 
             firestore.collection("users").document(firebaseUser.uid).set(newUser).await()
@@ -45,8 +45,7 @@ class AuthRepository(
 
     suspend fun loginUser(email: String, password: String): User? {
         return try {
-            val result = auth.signInWithEmailAndPassword(email, password).await()
-            val firebaseUser = result.user!!
+            auth.signInWithEmailAndPassword(email, password).await()
             getCurrentUser()
         } catch (e: Exception) {
             Log.e("AuthRepository", "Erro no login: $e")
@@ -60,19 +59,19 @@ class AuthRepository(
             val result = auth.signInWithCredential(credential).await()
             val firebaseUser = result.user!!
 
-            // Após login com Google, também buscamos/criamos o perfil no Firestore
             val userDocRef = firestore.collection("users").document(firebaseUser.uid)
             val document = userDocRef.get().await()
 
             if (document.exists()) {
-                document.toObject(User::class.java)
+                val user = document.toObject(User::class.java)
+                user
             } else {
                 val newUser = User(
                     id = firebaseUser.uid,
                     name = firebaseUser.displayName ?: "Usuário",
                     email = firebaseUser.email ?: "",
-                    registrationDate = LocalDate.now(),
-                    statusPremium = false
+                    statusPremium = false,
+                    registrationTimestamp = Date()
                 )
                 userDocRef.set(newUser).await()
                 newUser
@@ -88,7 +87,6 @@ class AuthRepository(
         return try {
             val document = firestore.collection("users").document(firebaseUser.uid).get().await()
             val user = document.toObject(User::class.java)
-            user?.let { userDao.insert(it) }
             user
         } catch (e: Exception) {
             Log.e("AuthRepository", "Erro ao buscar usuário do Firestore", e)

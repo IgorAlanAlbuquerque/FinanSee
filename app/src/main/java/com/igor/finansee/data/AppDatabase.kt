@@ -42,7 +42,7 @@ import kotlinx.coroutines.launch
         Transaction::class,
         User::class
     ],
-    version = 2,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

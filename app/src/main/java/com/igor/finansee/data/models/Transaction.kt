@@ -10,12 +10,12 @@ import java.util.Date
 data class Transaction(
     @PrimaryKey
     val id: String = "",
-    val userId: String,
-    val categoryId: String,
-    val value: Double,
-    val description: String,
-    val date: LocalDate,
-    val type: TransactionType,
+    val userId: String = "",
+    val categoryId: String = "",
+    val value: Double = 0.0,
+    val description: String = "",
+    val date: LocalDate = LocalDate.now(),
+    val type: TransactionType = TransactionType.TRANSFER_OUT,
     @ServerTimestamp
     val lastUpdated: Date? = null
 )

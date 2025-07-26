@@ -35,6 +35,7 @@ import androidx.navigation.NavHostController
 import com.igor.finansee.data.models.User
 import com.igor.finansee.view.theme.*
 import com.igor.finansee.viewmodels.AuthViewModel
+import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -170,10 +171,14 @@ fun ProfileHeader(user: User?) {
                     icon = Icons.Filled.WorkspacePremium,
                     text = if (user?.statusPremium ?: false) "Status Premium" else "Status Grátis"
                 )
-                val dateFormatter = DateTimeFormatter.ofPattern("dd/MMM", Locale("pt", "BR"))
+                val dateFormatter = SimpleDateFormat("dd 'de' MMMM 'de' yyyy", Locale("pt", "BR"))
+                val formattedDate = user?.registrationTimestamp?.let { date ->
+                    dateFormatter.format(date)
+                } ?: "data indisponível"
                 ProfileInfoItem(
                     icon = Icons.Filled.CalendarToday,
-                    text = "No FinanSee desde ${user?.registrationDate?.format(dateFormatter)}"
+                    text = "No FinanSee desde $formattedDate"
+
                 )
             }
         }

@@ -7,29 +7,8 @@ import com.igor.finansee.data.models.PlannedCategorySpending
 import com.igor.finansee.data.models.TransactionType
 import java.time.LocalDate
 import java.util.Date
-import java.util.UUID
 
-class Converters {
-    @TypeConverter
-    fun fromLocalDate(date: LocalDate?): String? {
-        return date?.toString()
-    }
-
-    @TypeConverter
-    fun toLocalDate(value: String?): LocalDate? {
-        return value?.let { LocalDate.parse(it) }
-    }
-
-    @TypeConverter
-    fun fromUUID(uuid: UUID?): String? {
-        return uuid?.toString()
-    }
-
-    @TypeConverter
-    fun toUUID(uuid: String?): UUID? {
-        return uuid?.let { UUID.fromString(it) }
-    }
-
+object Converters {
     @TypeConverter
     fun fromTransactionType(type: TransactionType?): String? {
         return type?.name
@@ -58,12 +37,22 @@ class Converters {
     }
 
     @TypeConverter
-    fun fromTimestamp(value: Long?): Date? {
+    fun fromTimestamp(value: Long?): Date? { // O nome poderia ser toDate, mas funciona
         return value?.let { Date(it) }
     }
 
     @TypeConverter
-    fun dateToTimestamp(date: Date?): Long? {
+    fun dateToTimestamp(date: Date?): Long? { // O nome poderia ser fromDate, mas funciona
         return date?.time
+    }
+
+    @TypeConverter
+    fun toLocalDate(value: Long?): LocalDate? {
+        return value?.let { LocalDate.ofEpochDay(it) }
+    }
+
+    @TypeConverter
+    fun fromLocalDate(date: LocalDate?): Long? {
+        return date?.toEpochDay()
     }
 }

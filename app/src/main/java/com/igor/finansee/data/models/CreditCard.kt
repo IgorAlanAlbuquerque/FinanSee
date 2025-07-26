@@ -22,7 +22,7 @@ import java.util.Date
 data class CreditCard(
     @PrimaryKey
     val id: String = "",
-    val userId: String,
+    val userId: String = "",
     val bankName: String = "",
     val lastFourDigits: String = "",
     val creditLimit: Double = 0.0,

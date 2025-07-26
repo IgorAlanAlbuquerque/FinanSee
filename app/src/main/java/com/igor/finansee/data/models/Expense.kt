@@ -29,11 +29,11 @@ import java.util.Date
 data class Expense(
     @PrimaryKey
     val id: String = "",
-    val userId: String,
-    val descricao: String,
-    val valor: Double,
-    val categoryId: String?,
-    val data: LocalDate,
+    val userId: String = "",
+    val descricao: String = "",
+    val valor: Double = 0.0,
+    val categoryId: String? = "",
+    val data: LocalDate = LocalDate.now(),
     @ServerTimestamp
     val lastUpdated: Date? = null
 ) {

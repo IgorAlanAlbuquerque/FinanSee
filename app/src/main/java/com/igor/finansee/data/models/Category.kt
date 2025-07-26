@@ -9,5 +9,5 @@ import java.util.Date
 data class Category(
     @PrimaryKey
     val id: String = "",
-    val name: String,
+    val name: String = "",
 )

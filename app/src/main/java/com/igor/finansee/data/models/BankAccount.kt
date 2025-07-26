@@ -22,7 +22,7 @@ import java.util.Date
 data class BankAccount(
     @PrimaryKey
     val id: String = "",
-    val userId: String,
+    val userId: String = "",
     val name: String = "",
     val type: String = "",
     val currentBalance: Double = 0.0,

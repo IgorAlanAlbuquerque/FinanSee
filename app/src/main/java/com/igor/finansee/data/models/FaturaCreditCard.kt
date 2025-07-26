@@ -23,7 +23,7 @@ import java.util.Date
 data class FaturaCreditCard(
     @PrimaryKey
     val id: String = "",
-    val creditCardId: String,
+    val creditCardId: String = "",
     val month: LocalDate = LocalDate.now(),
     val valor: Double = 0.0,
     @ServerTimestamp
