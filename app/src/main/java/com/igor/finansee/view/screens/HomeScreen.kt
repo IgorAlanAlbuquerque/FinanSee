@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.igor.finansee.data.models.BankAccount
 import com.igor.finansee.data.models.Category
@@ -69,9 +70,9 @@ import com.igor.finansee.data.models.FaturaCreditCard
 import com.igor.finansee.data.models.MonthPlanning
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.AppDatabase
-import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.models.User
 import com.igor.finansee.view.theme.*
+import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.HomeScreenViewModel
 import com.igor.finansee.viewmodels.HomeScreenViewModelFactory
 import java.time.LocalDate
@@ -88,8 +89,27 @@ data class CategoryWithAmount(
 @Composable
 fun HomeScreen(
     navController: NavHostController,
-    viewModel: HomeScreenViewModel = viewModel()
+    authViewModel: AuthViewModel
 ) {
+    val user by authViewModel.currentUser.collectAsState()
+
+    val context = LocalContext.current
+
+    val factory = remember(user) {
+        val db = AppDatabase.getDatabase(context)
+        HomeScreenViewModelFactory(
+            transactionDao = db.transactionDao(),
+            bankAccountDao = db.bankAccountDao(),
+            categoryDao = db.categoryDao(),
+            creditCardDao = db.creditCardDao(),
+            faturaDao = db.faturaCreditCardDao(),
+            planningDao = db.monthPlanningDao(),
+            user = user
+        )
+    }
+
+    val viewModel: HomeScreenViewModel = viewModel(factory = factory)
+
     val uiState by viewModel.uiState.collectAsState()
 
     LazyColumn(
@@ -887,29 +907,29 @@ fun MonthPlan(
     }
 }
 
-fun getIconForCategory(categoryId: Int): ImageVector {
+fun getIconForCategory(categoryId: String): ImageVector {
     return when (categoryId) {
-        6 -> Icons.Filled.Restaurant // Alimentação
-        7 -> Icons.Filled.Home // Moradia
-        8 -> Icons.Filled.DirectionsCar // Transporte
-        9 -> Icons.Filled.School // Educação
-        10 -> Icons.Filled.LocalHospital // Saúde
-        11 -> Icons.Filled.Celebration // Lazer
-        12 -> Icons.Filled.ShoppingCart // Compras
-        13 -> Icons.AutoMirrored.Filled.ReceiptLong // Contas de Consumo
-        14 -> Icons.Outlined.AttachMoney // Assinaturas (Ícone de dinheiro como no exemplo)
-        15 -> Icons.Filled.Flight // Viagem
-        16 -> Icons.Filled.AccountBalance // Impostos (Exemplo)
-        17 -> Icons.Filled.MoreHoriz // Outras Despesas
+        "1" -> Icons.Filled.Restaurant // Alimentação
+        "2" -> Icons.Filled.Home // Moradia
+        "3" -> Icons.Filled.DirectionsCar // Transporte
+        "4" -> Icons.Filled.School // Educação
+        "5" -> Icons.Filled.LocalHospital // Saúde
+        "6" -> Icons.Filled.Celebration // Lazer
+        "7" -> Icons.Filled.ShoppingCart // Compras
+        "8" -> Icons.AutoMirrored.Filled.ReceiptLong // Contas de Consumo
+        "9" -> Icons.Outlined.AttachMoney // Assinaturas (Ícone de dinheiro como no exemplo)
+        "10" -> Icons.Filled.Flight // Viagem
+        "11" -> Icons.Filled.AccountBalance // Impostos (Exemplo)
+        "12" -> Icons.Filled.MoreHoriz // Outras Despesas
         else -> Icons.Filled.Category // Ícone padrão
     }
 }
 
-fun getIconBgColorForCategory(categoryId: Int, isExceeded: Boolean): Color {
+fun getIconBgColorForCategory(categoryId: String, isExceeded: Boolean): Color {
     if (isExceeded) return IconBackgroundRed
     return when (categoryId) {
-        6 -> IconBackgroundRed
-        14 -> IconBackgroundBlue
+        "6"-> IconBackgroundRed
+        "14" -> IconBackgroundBlue
         else -> IconBackgroundBlue.copy(alpha = 0.7f)
     }
 }
@@ -975,7 +995,7 @@ fun PlanningCard(
                         fontWeight = FontWeight.SemiBold,
                         color = TextColorPrimary,
                         maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         statusText,

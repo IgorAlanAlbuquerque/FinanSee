@@ -51,7 +51,7 @@ fun DonutChart(
             val entries = grouped.map { PieEntry(it.value.toFloat(), it.key) }
 
             val cores = grouped.keys.map { categoria ->
-                val details = getCategoryUIDetails(transactionType, allCategories.find { it.name == categoria }?.id ?: -1, allCategories)
+                val details = getCategoryUIDetails(transactionType, allCategories.find { it.name == categoria }?.id ?: "", allCategories)
                 details.iconBackgroundColor.toArgb()
             }
 

@@ -1,6 +1,6 @@
 package com.igor.finansee.view.screens
 
-import ExpenseScreenViewModel
+import com.igor.finansee.viewmodels.ExpenseScreenViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -12,26 +12,25 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.igor.finansee.data.AppDatabase
-import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.models.Category
+import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.ExpenseScreenViewModelFactory
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddExpenseScreen(navController: NavHostController) {
+fun AddExpenseScreen(navController: NavHostController, authViewModel: AuthViewModel) {
+    val user by authViewModel.currentUser.collectAsState()
     val context = LocalContext.current
-    val db = AppDatabase.getDatabase(context)
 
-    val authRepository = AuthRepository(db.userDao())
+    val factory = remember(user) {
+        val db = AppDatabase.getDatabase(context)
+        ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao(), user)
+    }
 
-    val factory = ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao(), authRepository)
     val viewModel: ExpenseScreenViewModel = viewModel(factory = factory)
 
     val categoryList by viewModel.categories.collectAsState()
-    val categoriasDespesa = remember(categoryList) {
-        categoryList.filter { it.id >= 6 }
-    }
 
     var descricao by remember { mutableStateOf("") }
     var valor by remember { mutableStateOf("") }
@@ -87,7 +86,7 @@ fun AddExpenseScreen(navController: NavHostController) {
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
-                categoriasDespesa.forEach { categoria ->
+                categoryList.forEach { categoria ->
                     DropdownMenuItem(
                         text = { Text(categoria.name) },
                         onClick = {

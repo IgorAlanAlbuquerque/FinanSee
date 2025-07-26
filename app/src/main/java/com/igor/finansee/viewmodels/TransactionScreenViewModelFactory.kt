@@ -21,12 +21,11 @@ class TransactionScreenViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TransactionScreenViewModel::class.java)) {
             val firestore = Firebase.firestore
-            val userId = user?.id.toString()
+            val userId = user?.id ?: throw IllegalStateException("O utilizador deve ter sessão iniciada")
 
             val transactionRepository = TransactionRepository(transactionDao, firestore, userId)
             val bankAccountRepository = BankAccountRepository(bankAccountDao, firestore, userId)
-            val categoryRepository =
-                CategoryRepository(categoryDao, firestore)
+            val categoryRepository = CategoryRepository(categoryDao, firestore)
 
             @Suppress("UNCHECKED_CAST")
             return TransactionScreenViewModel(

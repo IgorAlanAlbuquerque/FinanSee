@@ -13,5 +13,5 @@ interface MonthPlanningDao {
     suspend fun upsertPlanning(planning: MonthPlanning)
 
     @Query("SELECT * FROM month_planning WHERE userId = :userId AND monthYear >= :startDate AND monthYear < :endDate LIMIT 1")
-    fun getPlanningForUserInPeriod(userId: Int, startDate: LocalDate, endDate: LocalDate): Flow<MonthPlanning?>
+    fun getPlanningForUserInPeriod(userId: String, startDate: LocalDate, endDate: LocalDate): Flow<MonthPlanning?>
 }

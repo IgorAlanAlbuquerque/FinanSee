@@ -2,7 +2,6 @@ package com.igor.finansee.viewmodels
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.igor.finansee.data.datastore.ThemeOption
 import com.igor.finansee.data.datastore.UserPreferencesRepository
@@ -18,7 +17,17 @@ class SettingsViewModel(private val userPreferencesRepository: UserPreferencesRe
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = UserPreferences(ThemeOption.SYSTEM, true, true, true, true, true, true, -1, -1, false)
+            initialValue = UserPreferences(ThemeOption.SYSTEM,
+                areAnimationsEnabled = true,
+                alertPendencies = true,
+                receiveNews = true,
+                receiveFinancialAlerts = true,
+                receivePremiumInfo = true,
+                receivePartnerOffers = true,
+                dailyReminderHour = -1,
+                dailyReminderMinute = -1,
+                isAppLockEnabled = false
+            )
         )
 
     fun setThemeOption(themeOption: ThemeOption) {

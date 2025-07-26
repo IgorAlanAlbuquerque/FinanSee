@@ -15,14 +15,14 @@ import java.time.LocalDate
 
 class FaturaCreditCardRepository(
     private val faturaDao: FaturaCreditCardDao,
-    private val firestore: FirebaseFirestore,
+    firestore: FirebaseFirestore,
     private val userId: String
 ) {
     val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val collection = firestore.collection("users").document(userId).collection("faturas")
 
     fun getFaturasFromRoom(startDate: LocalDate, endDate: LocalDate) =
-        faturaDao.getFaturasForUserInPeriod(userId.toIntOrNull() ?: 0, startDate, endDate)
+        faturaDao.getFaturasForUserInPeriod(userId, startDate, endDate)
 
     fun startListeningForRemoteChanges() {
         collection.addSnapshotListener { snapshots, error ->
@@ -39,11 +39,21 @@ class FaturaCreditCardRepository(
         }
     }
 
-    suspend fun saveFatura(fatura: FaturaCreditCard) {
+    suspend fun upsertFatura(fatura: FaturaCreditCard) {
         try {
-            collection.document(fatura.id.toString()).set(fatura).await()
+            val faturaToSave = if (fatura.id.isBlank()) {
+                val firestoreId = collection.document().id
+                fatura.copy(id = firestoreId)
+            } else {
+                fatura
+            }
+
+            faturaDao.upsertFatura(faturaToSave)
+
+            collection.document(faturaToSave.id).set(faturaToSave).await()
+
         } catch (e: Exception) {
-            Log.e("Firestore", "Error saving fatura", e)
+            Log.e("Firestore", "Error upserting bank account", e)
         }
     }
 

@@ -32,8 +32,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.AppDatabase
 import com.igor.finansee.data.models.Category
@@ -58,13 +58,15 @@ fun TransactionScreen(
     val user by authViewModel.currentUser.collectAsState()
 
     val context = LocalContext.current
-    val db = AppDatabase.getDatabase(context)
-    val factory = TransactionScreenViewModelFactory(
-        transactionDao = db.transactionDao(),
-        bankAccountDao = db.bankAccountDao(),
-        categoryDao = db.categoryDao(),
-        user = user
-    )
+    val factory = remember(user){
+        val db = AppDatabase.getDatabase(context)
+        TransactionScreenViewModelFactory(
+            transactionDao = db.transactionDao(),
+            bankAccountDao = db.bankAccountDao(),
+            categoryDao = db.categoryDao(),
+            user = user
+        )
+    }
 
     val viewModel: TransactionScreenViewModel = viewModel(factory = factory)
 

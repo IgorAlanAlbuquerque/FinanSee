@@ -21,13 +21,14 @@ class TransactionRepository(
 ) {
     val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    private val collection = firestore.collection("users").document(userId).collection("transactions")
+
     fun getTransactionsFromRoom(startDate: LocalDate, endDate: LocalDate) =
-        transactionDao.getTransactionsForPeriod(userId.toIntOrNull(), startDate, endDate)
+        transactionDao.getTransactionsForPeriod(userId, startDate, endDate)
 
     // --- SINCRONIZAÇÃO Remoto -> Local ---
     fun startListeningForRemoteChanges() {
-        firestore.collection("users").document(userId).collection("transactions")
-            .addSnapshotListener { snapshots, error ->
+        collection.addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     return@addSnapshotListener
                 }
@@ -45,15 +46,20 @@ class TransactionRepository(
     }
 
     // --- SINCRONIZAÇÃO Local -> Remoto ---
-    suspend fun saveTransaction(transaction: Transaction) {
+    suspend fun upsertTransaction(transaction: Transaction) {
         try {
-            firestore.collection("users").document(userId)
-                .collection("transactions")
-                .document(transaction.id.toString())
-                .set(transaction)
-                .await()
+            val transactionToSave = if (transaction.id.isBlank()) {
+                val firestoreId = collection.document().id
+                transaction.copy(id = firestoreId)
+            } else {
+                transaction
+            }
+
+            transactionDao.upsertTransaction(transactionToSave)
+            collection.document(transactionToSave.id).set(transactionToSave).await()
+
         } catch (e: Exception) {
-            Log.e("Firestore", "Error saving transaction", e)
+            Log.e("Firestore", "Error upserting bank account", e)
         }
     }
 
@@ -62,8 +68,8 @@ class TransactionRepository(
     }
 
     fun getSumByTypesForPeriod(types: List<TransactionType>, startDate: LocalDate, endDate: LocalDate) =
-        transactionDao.getSumByTypesForPeriod(userId.toIntOrNull() ?: 0, types, startDate, endDate)
+        transactionDao.getSumByTypesForPeriod(userId, types, startDate, endDate)
 
     fun getExpensesGroupedByCategory(expenseTypes: List<TransactionType>, startDate: LocalDate, endDate: LocalDate) =
-        transactionDao.getExpensesGroupedByCategory(userId.toIntOrNull() ?: 0, startDate, endDate, expenseTypes)
+        transactionDao.getExpensesGroupedByCategory(userId, startDate, endDate, expenseTypes)
 }

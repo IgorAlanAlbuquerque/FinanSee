@@ -1,4 +1,4 @@
-package com.igor.finansee.data
+package com.igor.finansee.data.repository
 
 import android.content.Context
 import android.util.Log
@@ -82,17 +82,11 @@ class AuthRepository(private val userDao: UserDao) {
         }
     }
 
-    /**
-     * Busca o usuário logado diretamente do banco de dados local.
-     */
     suspend fun getCurrentLocalUser(): User? {
         val firebaseUser = auth.currentUser ?: return null
         return userDao.findByEmail(firebaseUser.email ?: "")
     }
 
-    /**
-     * Retorna o UID (String) do usuário logado no Firebase.
-     */
     fun getFirebaseUserId(): String? {
         return auth.currentUser?.uid
     }

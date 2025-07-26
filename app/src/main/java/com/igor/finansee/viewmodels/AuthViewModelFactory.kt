@@ -1,7 +1,7 @@
 package com.igor.finansee.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.igor.finansee.data.AuthRepository
+import com.igor.finansee.data.repository.AuthRepository
 
 class AuthViewModelFactory(
     private val repository: AuthRepository

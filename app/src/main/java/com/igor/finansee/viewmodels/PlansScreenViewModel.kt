@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.igor.finansee.data.models.MonthPlanning
 import com.igor.finansee.data.models.TransactionType
-import com.igor.finansee.data.models.User
 import com.igor.finansee.data.repository.CategoryRepository
 import com.igor.finansee.data.repository.MonthPlanningRepository
 import com.igor.finansee.data.repository.TransactionRepository
@@ -28,11 +27,6 @@ class PlansScreenViewModel(
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
-
-    private val _currentUser = MutableStateFlow<User?>(null)
-    val currentUser: StateFlow<User?> = _currentUser
-
-
     private val _selectedDate = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
     private val expenseTypes = listOf(TransactionType.EXPENSE, TransactionType.CREDIT_CARD_EXPENSE)
 
@@ -67,7 +61,7 @@ class PlansScreenViewModel(
 
                     CategoryPlanWithProgress(
                         categoryId = categoryPlan.categoryId,
-                        categoryName = categoryName, // Usa o nome real da categoria
+                        categoryName = categoryName,
                         plannedAmount = categoryPlan.plannedAmount,
                         actualAmount = actualSpending,
                         progress = progress.coerceIn(0f, 1f)
@@ -103,7 +97,7 @@ class PlansScreenViewModel(
 
     fun savePlanning(planning: MonthPlanning) {
         viewModelScope.launch {
-            planningRepository.savePlanning(planning)
+            planningRepository.upsertPlanning(planning)
         }
     }
 

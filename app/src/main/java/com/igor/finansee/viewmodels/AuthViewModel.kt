@@ -3,7 +3,7 @@ package com.igor.finansee.viewmodels
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.igor.finansee.data.AuthRepository
+import com.igor.finansee.data.repository.AuthRepository
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.firebase.auth.FirebaseAuth
 import com.igor.finansee.data.models.User

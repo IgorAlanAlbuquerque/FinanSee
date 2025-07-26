@@ -1,6 +1,6 @@
 package com.igor.finansee.data.models
 
 data class CategoryExpenseResult(
-    val categoryId: Int,
+    val categoryId: String,
     val totalAmount: Double
 )

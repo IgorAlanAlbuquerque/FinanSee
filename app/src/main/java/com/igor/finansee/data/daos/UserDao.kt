@@ -24,5 +24,5 @@ interface UserDao {
     suspend fun findByEmail(email: String): User?
 
     @Query("SELECT * FROM user WHERE id = :userId")
-    fun getUserById(userId: Int): Flow<User?>
+    fun getUserById(userId: String): Flow<User?>
 }

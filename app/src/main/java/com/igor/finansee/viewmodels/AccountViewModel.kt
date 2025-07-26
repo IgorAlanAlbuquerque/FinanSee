@@ -18,7 +18,7 @@ class AccountViewModel(
         creditCardRepository.startListeningForRemoteChanges()
     }
 
-    fun addBankAccount(name: String, type: String, initialBalance: Double, userId: Int) {
+    fun addBankAccount(name: String, type: String, initialBalance: Double, userId: String) {
         viewModelScope.launch {
             val newAccount = BankAccount(
                 name = name,
@@ -27,11 +27,11 @@ class AccountViewModel(
                 userId = userId,
                 isActive = true
             )
-            bankAccountRepository.saveAccount(newAccount)
+            bankAccountRepository.upsertAccount(newAccount)
         }
     }
 
-    fun addCreditCard(bankName: String, lastFour: String, limit: Double, closingDay: Int, dueDay: Int, userId: Int) {
+    fun addCreditCard(bankName: String, lastFour: String, limit: Double, closingDay: Int, dueDay: Int, userId: String) {
         viewModelScope.launch {
             val newCard = CreditCard(
                 bankName = bankName,
@@ -42,7 +42,7 @@ class AccountViewModel(
                 userId = userId,
                 isActive = true
             )
-            creditCardRepository.saveCard(newCard)
+            creditCardRepository.upsertCreditCard(newCard)
         }
     }
 

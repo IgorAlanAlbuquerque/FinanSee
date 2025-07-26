@@ -12,7 +12,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 class MonthPlanningRepository(
     private val planningDao: MonthPlanningDao,
@@ -23,7 +22,7 @@ class MonthPlanningRepository(
     private val collection = firestore.collection("users").document(userId).collection("plannings")
 
     fun getPlanningFromRoom(startDate: LocalDate, endDate: LocalDate) =
-        planningDao.getPlanningForUserInPeriod(userId.toIntOrNull() ?: 0, startDate, endDate)
+        planningDao.getPlanningForUserInPeriod(userId, startDate, endDate)
 
     fun startListeningForRemoteChanges() {
         collection.addSnapshotListener { snapshots, error ->
@@ -43,12 +42,20 @@ class MonthPlanningRepository(
         }
     }
 
-    suspend fun savePlanning(planning: MonthPlanning) {
+    suspend fun upsertPlanning(planning: MonthPlanning) {
         try {
-            val docId = planning.monthYear.format(DateTimeFormatter.ofPattern("yyyy-MM"))
-            collection.document(docId).set(planning).await()
+            val planningToSave = if (planning.id.isBlank()) {
+                val firestoreId = collection.document().id
+                planning.copy(id = firestoreId)
+            } else {
+                planning
+            }
+
+            planningDao.upsertPlanning(planningToSave)
+            collection.document(planningToSave.id).set(planningToSave).await()
+
         } catch (e: Exception) {
-            Log.e("Firestore", "Error saving planning", e)
+            Log.e("Firestore", "Error upserting bank account", e)
         }
     }
 

@@ -1,35 +1,37 @@
+package com.igor.finansee.viewmodels
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.igor.finansee.data.AuthRepository
-import com.igor.finansee.data.daos.CategoryDao
-import com.igor.finansee.data.daos.ExpenseDao
 import com.igor.finansee.data.models.Category
 import com.igor.finansee.data.models.Expense
-import com.igor.finansee.data.models.ExpenseWithCategory
+import com.igor.finansee.data.models.User
+import com.igor.finansee.data.repository.CategoryRepository
+import com.igor.finansee.data.repository.ExpenseRepository
+import com.igor.finansee.data.states.ExpenseScreenUiState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.util.UUID
-
-data class ExpenseUiState(
-    val expenses: List<ExpenseWithCategory> = emptyList(),
-    val selectedMonth: LocalDate = LocalDate.now().withDayOfMonth(1),
-    val isLoading: Boolean = false
-)
 
 class ExpenseScreenViewModel(
-    private val expenseDao: ExpenseDao,
-    private val categoryDao: CategoryDao,
-    private val authRepository: AuthRepository
+    private val expenseRepository: ExpenseRepository,
+    categoryRepository: CategoryRepository,
+    private val user: User
 
 ) : ViewModel() {
+    private val _currentUser = MutableStateFlow(user)
+    val currentUser: StateFlow<User> = _currentUser.asStateFlow()
 
     private val _selectedMonth = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
 
-    private val _uiState = MutableStateFlow(ExpenseUiState(isLoading = true))
-    val uiState: StateFlow<ExpenseUiState> = _uiState.asStateFlow()
+    init {
+        expenseRepository.startListeningForRemoteChanges()
+        categoryRepository.startListeningForRemoteChanges()
+    }
 
-    val categories: StateFlow<List<Category>> = categoryDao.getAllCategories()
+    private val _uiState = MutableStateFlow(ExpenseScreenUiState(isLoading = true))
+    val uiState: StateFlow<ExpenseScreenUiState> = _uiState.asStateFlow()
+
+    val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesFromRoom()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
@@ -39,7 +41,7 @@ class ExpenseScreenViewModel(
 
                 val start = month
                 val end = month.plusMonths(1)
-                val expensesFlow = expenseDao.getExpensesWithCategoryBetween(start, end)
+                val expensesFlow = expenseRepository.getExpensesFromRoom(user.id,start, end)
 
                 expensesFlow.collect { expenses ->
                     _uiState.update {
@@ -55,14 +57,14 @@ class ExpenseScreenViewModel(
     }
 
     fun updateExpense(
-        id: UUID,
+        id: String,
         descricao: String,
         valor: Double,
-        categoryId: Int?,
+        categoryId: String?,
         data: LocalDate
     ) {
         viewModelScope.launch {
-            val userId = authRepository.getCurrentLocalUser()?.id?.toString() ?: return@launch
+            val userId = user.id
             val updatedExpense = Expense(
                 id = id,
                 userId = userId,
@@ -72,14 +74,14 @@ class ExpenseScreenViewModel(
                 data = data
             )
 
-            expenseDao.upsertExpense(updatedExpense)
+            expenseRepository.upsertExpense(updatedExpense)
         }
     }
 
 
-    fun deleteExpense(expense: UUID) {
+    fun deleteExpense(expense: String) {
         viewModelScope.launch {
-            expenseDao.deleteExpenseById(expense)
+            expenseRepository.deleteExpenseById(expense)
         }
     }
     fun selectPreviousMonth() {
@@ -90,20 +92,18 @@ class ExpenseScreenViewModel(
         _selectedMonth.value = _selectedMonth.value.plusMonths(1)
     }
 
-    fun addExpense(descricao: String, valor: Double, categoryId: Int?, data: LocalDate) {
+    fun addExpense(descricao: String, valor: Double, categoryId: String?, data: LocalDate) {
         viewModelScope.launch {
-            val userId = authRepository.getFirebaseUserId()
+            val userId = user.id
 
-            if (userId != null && categoryId != null) {
-                val novaDespesa = Expense(
-                    userId = userId,
-                    descricao = descricao,
-                    valor = valor,
-                    categoryId = categoryId,
-                    data = data
-                )
-                expenseDao.upsertExpense(novaDespesa)
-            }
+            val novaDespesa = Expense(
+                userId = userId,
+                descricao = descricao,
+                valor = valor,
+                categoryId = categoryId,
+                data = data
+            )
+            expenseRepository.upsertExpense(novaDespesa)
         }
     }
 

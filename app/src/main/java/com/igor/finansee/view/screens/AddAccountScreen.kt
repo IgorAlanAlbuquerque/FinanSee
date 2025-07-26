@@ -9,11 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.igor.finansee.data.AppDatabase
-import com.igor.finansee.data.models.User
 import com.igor.finansee.viewmodels.AccountViewModel
 import com.igor.finansee.viewmodels.AccountViewModelFactory
 import com.igor.finansee.viewmodels.AuthViewModel
@@ -27,11 +25,15 @@ fun AddAccountScreen(
     val currentUser by authViewModel.currentUser.collectAsState()
     val initialIndex = if (initialTab == "cartao") 1 else 0
     val context = LocalContext.current
-    val db = AppDatabase.getDatabase(context)
-    val factory = AccountViewModelFactory(db.bankAccountDao(), db.creditCardDao(), currentUser)
+
+    val factory = remember(currentUser) {
+        val db = AppDatabase.getDatabase(context)
+        AccountViewModelFactory(db.bankAccountDao(), db.creditCardDao(), currentUser)
+    }
+
     val viewModel: AccountViewModel = viewModel(factory = factory)
 
-    var selectedTabIndex by remember { mutableStateOf(initialIndex) }
+    var selectedTabIndex by remember { mutableIntStateOf(initialIndex) }
     val tabs = listOf("Conta", "Cartão de Crédito")
 
     var accountName by remember { mutableStateOf("") }
@@ -83,24 +85,26 @@ fun AddAccountScreen(
 
             Button(
                 onClick = {
-                    if (selectedTabIndex == 0) {
-                        viewModel.addBankAccount(
-                            name = accountName,
-                            type = accountType,
-                            initialBalance = initialBalance.toDoubleOrNull() ?: 0.0,
-                            userId = currentUser?.id ?: 0
-                        )
-                    } else {
-                        viewModel.addCreditCard(
-                            bankName = cardBankName,
-                            lastFour = cardLastFour,
-                            limit = cardLimit.toDoubleOrNull() ?: 0.0,
-                            closingDay = cardClosingDay.toIntOrNull() ?: 1,
-                            dueDay = cardDueDay.toIntOrNull() ?: 10,
-                            userId = currentUser?.id ?: 0
-                        )
+                    currentUser?.let { user ->
+                        if (selectedTabIndex == 0) {
+                            viewModel.addBankAccount(
+                                name = accountName,
+                                type = accountType,
+                                initialBalance = initialBalance.toDoubleOrNull() ?: 0.0,
+                                userId = user.id
+                            )
+                        } else {
+                            viewModel.addCreditCard(
+                                bankName = cardBankName,
+                                lastFour = cardLastFour,
+                                limit = cardLimit.toDoubleOrNull() ?: 0.0,
+                                closingDay = cardClosingDay.toIntOrNull() ?: 1,
+                                dueDay = cardDueDay.toIntOrNull() ?: 10,
+                                userId = user.id
+                            )
+                        }
+                        navController.popBackStack()
                     }
-                    navController.popBackStack()
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {

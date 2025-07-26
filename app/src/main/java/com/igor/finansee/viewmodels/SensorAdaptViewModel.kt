@@ -1,5 +1,6 @@
 package com.igor.finansee.viewmodels
 
+import android.Manifest
 import android.app.Application
 import android.content.Context
 import android.content.Intent
@@ -14,6 +15,7 @@ import android.location.Location
 import android.location.LocationManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,10 +88,11 @@ class SensorAdaptViewModel(
         }
     }
 
+    @RequiresPermission(anyOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     fun checkIfUFCQuixada() {
         val lm = getApplication<Application>().getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        val perm = ContextCompat.checkSelfPermission(getApplication(), android.Manifest.permission.ACCESS_FINE_LOCATION)
+        val perm = ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.ACCESS_FINE_LOCATION)
         if (perm != PackageManager.PERMISSION_GRANTED) {
             _isUFCQuixada.value = false
             return

@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CreditCardDao {
     @Query("SELECT * FROM credit_card WHERE userId = :userId")
-    fun getCardsForUser(userId: Int): Flow<List<CreditCard>>
+    fun getCardsForUser(userId: String): Flow<List<CreditCard>>
 
     @Upsert
     suspend fun upsertCreditCard(card: CreditCard)

@@ -12,15 +12,13 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
-import java.util.UUID
 
 class ExpenseRepository(
     private val expenseDao: ExpenseDao,
     firestore: FirebaseFirestore,
     userId: String
 ) {
-    val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val collection = firestore.collection("users").document(userId).collection("expenses")
 
     fun getExpensesFromRoom(userId: String, startDate: LocalDate, endDate: LocalDate) =
@@ -32,39 +30,39 @@ class ExpenseRepository(
                 Log.w("Firestore", "Listen failed for expenses.", error)
                 return@addSnapshotListener
             }
-
             if (snapshots != null) {
                 val remoteExpenses = snapshots.toObjects<Expense>()
                 repositoryScope.launch {
-                    remoteExpenses.forEach { expense ->
-                        expenseDao.upsertExpense(expense)
-                    }
+                    expenseDao.upsertAll(remoteExpenses)
                 }
             }
         }
     }
 
-    suspend fun saveExpense(expense: Expense) {
+    suspend fun upsertExpense(expense: Expense) {
         try {
-            collection.document(expense.id.toString()).set(expense).await()
+            val expenseToSave = if (expense.id.isBlank()) {
+                val newId = collection.document().id
+                expense.copy(id = newId)
+            } else {
+                expense
+            }
+
+            expenseDao.upsertExpense(expenseToSave)
+            collection.document(expenseToSave.id).set(expenseToSave).await()
+
         } catch (e: Exception) {
-            Log.e("Firestore", "Error saving expense", e)
+            Log.e("Firestore", "Error upserting expense", e)
         }
     }
 
-    suspend fun deleteExpense(expense: Expense) {
+    suspend fun deleteExpenseById(expenseId: String) {
         try {
-            collection.document(expense.id.toString()).delete().await()
+            expenseDao.deleteExpenseById(expenseId)
+            collection.document(expenseId).delete().await()
         } catch (e: Exception) {
             Log.e("Firestore", "Error deleting expense", e)
         }
-    }
-
-    suspend fun getExpenseById(userId: String, expenseId: UUID): Expense? {
-        return expenseDao.getExpenseById(
-            expenseId,
-            userId = userId
-        )
     }
 
     fun cancelScope() {

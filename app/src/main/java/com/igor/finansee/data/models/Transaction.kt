@@ -8,10 +8,10 @@ import java.util.Date
 
 @Entity(tableName = "transactions")
 data class Transaction(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val userId: Int,
-    val categoryId: Int,
+    @PrimaryKey
+    val id: String = "",
+    val userId: String,
+    val categoryId: String,
     val value: Double,
     val description: String,
     val date: LocalDate,

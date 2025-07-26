@@ -1,6 +1,6 @@
 package com.igor.finansee.view.screens
 
-import ExpenseScreenViewModel
+import com.igor.finansee.viewmodels.ExpenseScreenViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -17,21 +17,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.AppDatabase
-import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.models.TransactionType
 import com.igor.finansee.view.components.DonutChart
+import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.ExpenseScreenViewModelFactory
 import java.time.format.DateTimeFormatter
 @Composable
-fun DonutChartScreen() {
+fun DonutChartScreen(authViewModel: AuthViewModel) {
+    val user by authViewModel.currentUser.collectAsState()
     val context = LocalContext.current
-    val db = AppDatabase.getDatabase(context)
-    val authRepository = AuthRepository(db.userDao())
-    val factory = ExpenseScreenViewModelFactory(
-        expenseDao = db.expenseDao(),
-        categoryDao = db.categoryDao(),
-        authRepository = authRepository
-    )
+
+    val factory = remember(user) {
+        val db = AppDatabase.getDatabase(context)
+        ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao(), user)
+    }
 
     val viewModel: ExpenseScreenViewModel = viewModel(factory = factory)
 

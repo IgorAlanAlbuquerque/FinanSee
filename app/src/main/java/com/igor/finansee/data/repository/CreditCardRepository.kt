@@ -22,7 +22,7 @@ class CreditCardRepository(
     private val collection = firestore.collection("users").document(userId).collection("credit_cards")
 
     fun getCardsFromRoom(): Flow<List<CreditCard>> {
-        return creditCardDao.getCardsForUser(userId.toIntOrNull() ?: 0)
+        return creditCardDao.getCardsForUser(userId)
     }
 
     fun startListeningForRemoteChanges() {
@@ -40,11 +40,21 @@ class CreditCardRepository(
         }
     }
 
-    suspend fun saveCard(card: CreditCard) {
+    suspend fun upsertCreditCard(creditCard: CreditCard) {
         try {
-            collection.document(card.id.toString()).set(card).await()
+            val creditCardToSave = if (creditCard.id.isBlank()) {
+                val firestoreId = collection.document().id
+                creditCard.copy(id = firestoreId)
+            } else {
+                creditCard
+            }
+
+            creditCardDao.upsertCreditCard(creditCardToSave)
+
+            collection.document(creditCardToSave.id).set(creditCardToSave).await()
+
         } catch (e: Exception) {
-            Log.e("Firestore", "Error saving credit card", e)
+            Log.e("Firestore", "Error upserting credit card", e)
         }
     }
 

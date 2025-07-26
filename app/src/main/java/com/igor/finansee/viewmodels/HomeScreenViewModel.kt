@@ -2,7 +2,6 @@ package com.igor.finansee.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.igor.finansee.data.AuthRepository
 import com.igor.finansee.data.models.*
 import com.igor.finansee.data.repository.BankAccountRepository
 import com.igor.finansee.data.repository.CategoryRepository
@@ -17,10 +16,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 private data class MonthlyData(
@@ -46,19 +45,14 @@ class HomeScreenViewModel(
     private val creditCardRepository: CreditCardRepository,
     private val bankAccountRepository: BankAccountRepository,
     private val categoryRepository: CategoryRepository,
-    private val authRepository: AuthRepository
+    private val user: User
 ) : ViewModel() {
 
-    private val _currentUser = MutableStateFlow<User?>(null)
-    val currentUser: StateFlow<User?> = _currentUser
+    private val _currentUser = MutableStateFlow(user)
+    val currentUser: StateFlow<User> = _currentUser.asStateFlow()
 
 
     init {
-        viewModelScope.launch {
-            _currentUser.value = authRepository.getCurrentLocalUser()
-        }
-
-
         transactionRepository.startListeningForRemoteChanges()
         planningRepository.startListeningForRemoteChanges()
         creditCardRepository.startListeningForRemoteChanges()
@@ -95,7 +89,11 @@ class HomeScreenViewModel(
         _showBalance,
         _staticDataFlow,
         _monthlyDataFlow
-    ) { currentUser, month, showBalance, staticData, monthlyData ->
+    ) { currentUser: User?,
+        month: LocalDate,
+        showBalance: Boolean,
+        staticData: StaticData,
+        monthlyData: MonthlyData ->
         val userName = currentUser?.name?.split(" ")?.firstOrNull() ?: "Utilizador"
 
         HomeScreenUiState(

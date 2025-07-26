@@ -15,7 +15,7 @@ import kotlinx.coroutines.tasks.await
 
 class CategoryRepository(
     private val categoryDao: CategoryDao,
-    firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore
 ) {
     val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -42,11 +42,28 @@ class CategoryRepository(
         }
     }
 
-    suspend fun saveCategory(category: Category) {
+    suspend fun isEmpty(): Boolean {
+        return categoryDao.getCategoryCount() == 0
+    }
+
+    suspend fun insertAll(categories: List<Category>) {
         try {
-            collection.document(category.id.toString()).set(category).await()
+            val categoriesWithIds = mutableListOf<Category>()
+            val batch = firestore.batch()
+
+            categories.forEach { category ->
+                val firestoreId = collection.document().id
+                val categoryWithId = category.copy(id = firestoreId)
+                categoriesWithIds.add(categoryWithId)
+
+                val docRef = collection.document(firestoreId)
+                batch.set(docRef, categoryWithId)
+            }
+
+            categoryDao.upsertAll(categoriesWithIds)
+            batch.commit().await()
         } catch (e: Exception) {
-            Log.e("Firestore", "Error saving category", e)
+            Log.e("Firestore", "Error inserting initial categories", e)
         }
     }
 

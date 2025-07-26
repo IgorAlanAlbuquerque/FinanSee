@@ -15,7 +15,7 @@ interface FaturaCreditCardDao {
         WHERE month >= :startDate AND month < :endDate
         AND creditCardId IN (SELECT id FROM credit_card WHERE userId = :userId)
     """)
-    fun getFaturasForUserInPeriod(userId: Int, startDate: LocalDate, endDate: LocalDate): Flow<List<FaturaCreditCard>>
+    fun getFaturasForUserInPeriod(userId: String, startDate: LocalDate, endDate: LocalDate): Flow<List<FaturaCreditCard>>
 
     @Upsert
     suspend fun upsertFatura(fatura: FaturaCreditCard)

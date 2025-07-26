@@ -5,6 +5,9 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import com.igor.finansee.data.daos.BankAccountDao
 import com.igor.finansee.data.daos.CategoryDao
 import com.igor.finansee.data.daos.CreditCardDao
@@ -21,7 +24,11 @@ import com.igor.finansee.data.models.FaturaCreditCard
 import com.igor.finansee.data.models.MonthPlanning
 import com.igor.finansee.data.models.Transaction
 import com.igor.finansee.data.models.User
+import com.igor.finansee.data.repository.CategoryRepository
 import com.igor.finansee.data.utils.Converters
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 // 1. ANOTAÇÃO DE CONFIGURAÇÃO
 @Database(
@@ -35,7 +42,7 @@ import com.igor.finansee.data.utils.Converters
         Transaction::class,
         User::class
     ],
-    version = 7,
+    version = 1,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -63,9 +70,41 @@ abstract class AppDatabase : RoomDatabase() {
                     "finansee_database"
                 )
                     .fallbackToDestructiveMigration()
+                    .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance
                 instance
+            }
+        }
+    }
+
+    private class DatabaseCallback(): Callback() {
+
+        override fun onCreate(db: SupportSQLiteDatabase) {
+            super.onCreate(db)
+            INSTANCE?.let { database ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    populateDatabase(categoryRepository = CategoryRepository(
+                        database.categoryDao(),
+                        firestore = Firebase.firestore
+                    ))
+                }
+            }
+        }
+
+        suspend fun populateDatabase(categoryRepository: CategoryRepository) {
+            if(categoryRepository.isEmpty()){
+                val initialCategories = listOf(
+                    Category(name = "Salário"),
+                    Category(name = "Alimentação"),
+                    Category(name = "Transporte"),
+                    Category(name = "Moradia"),
+                    Category(name = "Lazer"),
+                    Category(name = "Saúde"),
+                    Category(name = "Educação"),
+                    Category(name = "Outros")
+                )
+                categoryRepository.insertAll(initialCategories)
             }
         }
     }

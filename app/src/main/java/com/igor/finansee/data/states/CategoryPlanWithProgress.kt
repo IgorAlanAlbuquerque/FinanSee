@@ -1,7 +1,7 @@
 package com.igor.finansee.data.states
 
 data class CategoryPlanWithProgress(
-    val categoryId: Int,
+    val categoryId: String,
     val categoryName: String,
     val plannedAmount: Double,
     val actualAmount: Double,

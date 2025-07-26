@@ -18,7 +18,7 @@ class AccountViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AccountViewModel::class.java)) {
             val firestore = Firebase.firestore
-            val userId = user?.id.toString()
+            val userId = user?.id ?: throw IllegalStateException("O utilizador deve ter sessão iniciada")
 
             val bankAccountRepository = BankAccountRepository(bankAccountDao, firestore, userId)
             val creditCardRepository = CreditCardRepository(creditCardDao, firestore, userId)

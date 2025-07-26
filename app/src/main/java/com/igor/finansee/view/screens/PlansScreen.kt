@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.AppDatabase
-import com.igor.finansee.data.AuthRepository
+import com.igor.finansee.data.repository.AuthRepository
 import com.igor.finansee.data.models.User
 import com.igor.finansee.viewmodels.PlansScreenViewModel
 import com.igor.finansee.viewmodels.PlansScreenViewModelFactory

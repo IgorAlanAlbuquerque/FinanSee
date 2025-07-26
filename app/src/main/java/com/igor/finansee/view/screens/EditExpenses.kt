@@ -1,6 +1,7 @@
 package com.igor.finansee.view.screens
 
-import ExpenseScreenViewModel
+import android.util.Log
+import com.igor.finansee.viewmodels.ExpenseScreenViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,13 +15,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.models.*
-import java.util.UUID
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.igor.finansee.data.AppDatabase
-import com.igor.finansee.data.AuthRepository
+import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.ExpenseScreenViewModelFactory
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -28,17 +28,22 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditExpenseScreen(authRepository: AuthRepository) {
+fun EditExpenseScreen(authViewModel: AuthViewModel) {
+    val user by authViewModel.currentUser.collectAsState()
     val context = LocalContext.current
-    val db = AppDatabase.getDatabase(context)
-    val factory = ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao(), authRepository)
+
+    val factory = remember(user) {
+        val db = AppDatabase.getDatabase(context)
+        ExpenseScreenViewModelFactory(db.expenseDao(), db.categoryDao(), user)
+    }
+
     val viewModel: ExpenseScreenViewModel = viewModel(factory = factory)
 
     val uiState by viewModel.uiState.collectAsState()
     val categoryList by viewModel.categories.collectAsState()
 
     val expensesForMonth = uiState.expenses
-    var editingExpenseId by remember { mutableStateOf<UUID?>(null) }
+    var editingExpenseId = ""
 
     var descricao by remember { mutableStateOf("") }
     var valor by remember { mutableStateOf("") }
@@ -102,7 +107,7 @@ fun EditExpenseScreen(authRepository: AuthRepository) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (editingExpenseId != null) {
+        if (editingExpenseId != "") {
             Text("Editar despesa", style = MaterialTheme.typography.headlineSmall)
 
             OutlinedTextField(
@@ -162,26 +167,27 @@ fun EditExpenseScreen(authRepository: AuthRepository) {
                     val dataLocalDate = try {
                         LocalDate.parse(data)
                     } catch (e: Exception) {
+                        Log.e("errp", "ovo", e)
                         null
                     }
 
                     if (dataLocalDate != null && categoriaSelecionada != null) {
                         viewModel.updateExpense(
-                            editingExpenseId!!,
+                            editingExpenseId,
                             descricao,
                             valor.toDoubleOrNull() ?: 0.0,
                             categoriaSelecionada?.id,
                             dataLocalDate
                         )
-                        editingExpenseId = null
+                        editingExpenseId = ""
                     }
                 }) {
                     Text("Salvar")
                 }
 
                 Button(onClick = {
-                    viewModel.deleteExpense(editingExpenseId!!)
-                    editingExpenseId = null
+                    viewModel.deleteExpense(editingExpenseId)
+                    editingExpenseId = ""
                 }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
                     Text("Excluir")
                 }

@@ -16,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -24,7 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.igor.finansee.data.AppDatabase
-import com.igor.finansee.data.AuthRepository
+import com.igor.finansee.data.repository.AuthRepository
 import com.igor.finansee.data.datastore.UserPreferencesRepository
 import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.SettingsViewModel
@@ -50,8 +49,6 @@ import com.igor.finansee.view.screens.SettingsScreen
 import com.igor.finansee.view.screens.SplashScreen
 import com.igor.finansee.view.screens.TransactionScreen
 import com.igor.finansee.view.theme.FinanSeeTheme
-import com.igor.finansee.viewmodels.HomeScreenViewModel
-import com.igor.finansee.viewmodels.HomeScreenViewModelFactory
 
 object Routes {
     const val SPLASH = "splash_screen"
@@ -88,8 +85,6 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val scope = rememberCoroutineScope()
-            val db = AppDatabase.getDatabase(context)
-            val authRepository = AuthRepository(db.userDao())
             val userDao = AppDatabase.getDatabase(context).userDao()
             val authViewModel: AuthViewModel = viewModel(
                 factory = AuthViewModelFactory(AuthRepository(userDao))
@@ -150,20 +145,9 @@ class MainActivity : ComponentActivity() {
                                 NavAuth(navController, authViewModel)
 
                                 composable(Routes.HOME) {
-                                    val factory = HomeScreenViewModelFactory(
-                                        bankAccountDao = db.bankAccountDao(),
-                                        creditCardDao = db.creditCardDao(),
-                                        faturaDao = db.faturaCreditCardDao(),
-                                        transactionDao = db.transactionDao(),
-                                        planningDao = db.monthPlanningDao(),
-                                        categoryDao = db.categoryDao(),
-                                        authRepository = authRepository
-                                    )
-                                    val homeScreenViewModel: HomeScreenViewModel = viewModel(factory = factory)
-
                                     HomeScreen(
                                         navController = navController,
-                                        viewModel = homeScreenViewModel
+                                        authViewModel
                                     )
                                 }
 
@@ -176,16 +160,16 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 composable(Routes.DONUT_CHART) {
-                                    DonutChartScreen()
+                                    DonutChartScreen(authViewModel)
                                 }
 
                                 composable(Routes.ADD_EXPENSE) {
-                                    AddExpenseScreen(navController)
+                                    AddExpenseScreen(navController, authViewModel)
                                 }
 
                                 composable(Routes.EDIT_EXPENSE) {
                                     EditExpenseScreen(
-                                        authRepository = authRepository
+                                        authViewModel
                                     )
                                 }
 

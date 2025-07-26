@@ -8,8 +8,8 @@ import java.util.Date
 
 @Entity(tableName = "user")
 data class User(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey
+    val id: String = "",
     val email: String,
     val name: String,
     val registrationDate: LocalDate,

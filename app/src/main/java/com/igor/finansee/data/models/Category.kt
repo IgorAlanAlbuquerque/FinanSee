@@ -7,7 +7,7 @@ import java.util.Date
 
 @Entity(tableName = "category")
 data class Category(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey
+    val id: String = "",
     val name: String,
 )

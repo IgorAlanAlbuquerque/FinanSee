@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface BankAccountDao {
     @Query("SELECT SUM(currentBalance) FROM bank_accounts WHERE userId = :userId AND isActive = 1")
-    fun getOverallBalanceForUser(userId: Int): Flow<Double?>
+    fun getOverallBalanceForUser(userId: String): Flow<Double?>
 
     @Query("SELECT * FROM bank_accounts WHERE userId = :userId")
-    fun getAccountsForUser(userId: Int): Flow<List<BankAccount>>
+    fun getAccountsForUser(userId: String): Flow<List<BankAccount>>
 
     @Upsert
     suspend fun upsertBankAccount(account: BankAccount)

@@ -18,20 +18,20 @@ interface TransactionDao {
         WHERE userId = :userId AND date >= :startDate AND date < :endDate
         ORDER BY date DESC
     """)
-    fun getTransactionsForPeriod(userId: Int?, startDate: LocalDate, endDate: LocalDate): Flow<List<TransactionWithCategory>>
+    fun getTransactionsForPeriod(userId: String, startDate: LocalDate, endDate: LocalDate): Flow<List<TransactionWithCategory>>
 
     @Query("""
         SELECT SUM(value) FROM transactions
         WHERE userId = :userId AND type IN (:types) AND date >= :startDate AND date < :endDate
     """)
-    fun getSumByTypesForPeriod(userId: Int, types: List<TransactionType>, startDate: LocalDate, endDate: LocalDate): Flow<Double?>
+    fun getSumByTypesForPeriod(userId: String, types: List<TransactionType>, startDate: LocalDate, endDate: LocalDate): Flow<Double?>
 
     @Query("""
         SELECT categoryId, SUM(value) as totalAmount FROM transactions
         WHERE userId = :userId AND date >= :startDate AND date < :endDate AND type IN (:expenseTypes)
         GROUP BY categoryId
     """)
-    fun getExpensesGroupedByCategory(userId: Int, startDate: LocalDate, endDate: LocalDate, expenseTypes: List<TransactionType>): Flow<List<CategoryExpenseResult>>
+    fun getExpensesGroupedByCategory(userId: String, startDate: LocalDate, endDate: LocalDate, expenseTypes: List<TransactionType>): Flow<List<CategoryExpenseResult>>
 
     @Upsert
     suspend fun upsertTransaction(transaction: Transaction)

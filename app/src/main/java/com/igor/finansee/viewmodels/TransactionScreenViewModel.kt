@@ -92,7 +92,7 @@ class TransactionScreenViewModel(
 
     fun saveTransaction(transaction: Transaction) {
         viewModelScope.launch {
-            transactionRepository.saveTransaction(transaction)
+            transactionRepository.upsertTransaction(transaction)
         }
     }
 
