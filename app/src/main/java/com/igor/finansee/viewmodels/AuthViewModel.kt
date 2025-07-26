@@ -19,7 +19,7 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
             val firebaseUser = firebaseAuth.currentUser
             if (firebaseUser != null) {
                 viewModelScope.launch {
-                    _currentUser.value = repository.getCurrentLocalUser()
+                    _currentUser.value = repository.getCurrentUser()
                 }
             } else {
                 _currentUser.value = null
@@ -45,7 +45,12 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
     fun login(email: String, password: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             val user = repository.loginUser(email, password)
-            onResult(user != null)
+            if (user != null) {
+                _currentUser.value = user
+                onResult(true)
+            } else {
+                onResult(false)
+            }
         }
     }
 
@@ -64,7 +69,12 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
     fun loginWithGoogle(idToken: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             val user = repository.loginWithGoogle(idToken)
-            onResult(user != null)
+            if (user != null) {
+                _currentUser.value = user
+                onResult(true)
+            } else {
+                onResult(false)
+            }
         }
     }
 

@@ -46,10 +46,8 @@ class AuthRepository(
     suspend fun loginUser(email: String, password: String): User? {
         return try {
             val result = auth.signInWithEmailAndPassword(email, password).await()
-            val firebaseUser = result.user
-            firebaseUser?.let {
-                userDao.findByEmail(it.email ?: "")
-            }
+            val firebaseUser = result.user!!
+            getCurrentUser()
         } catch (e: Exception) {
             Log.e("AuthRepository", "Erro no login: $e")
             null
@@ -60,24 +58,24 @@ class AuthRepository(
         return try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val result = auth.signInWithCredential(credential).await()
-            val firebaseUser = result.user
+            val firebaseUser = result.user!!
 
-            if (firebaseUser != null) {
-                var localUser = userDao.findByEmail(firebaseUser.email ?: "")
-                if (localUser == null) {
-                    val newUser = User(
-                        name = firebaseUser.displayName ?: "Usuário",
-                        email = firebaseUser.email ?: "",
-                        registrationDate = LocalDate.now(),
-                        statusPremium = false,
-                        fotoPerfil = null
-                    )
-                    userDao.insert(newUser)
-                    localUser = newUser
-                }
-                localUser
+            // Após login com Google, também buscamos/criamos o perfil no Firestore
+            val userDocRef = firestore.collection("users").document(firebaseUser.uid)
+            val document = userDocRef.get().await()
+
+            if (document.exists()) {
+                document.toObject(User::class.java)
             } else {
-                null
+                val newUser = User(
+                    id = firebaseUser.uid,
+                    name = firebaseUser.displayName ?: "Usuário",
+                    email = firebaseUser.email ?: "",
+                    registrationDate = LocalDate.now(),
+                    statusPremium = false
+                )
+                userDocRef.set(newUser).await()
+                newUser
             }
         } catch (e: Exception) {
             Log.e("AuthRepository", "Erro no login com Google: ${e.message}")
@@ -85,9 +83,17 @@ class AuthRepository(
         }
     }
 
-    suspend fun getCurrentLocalUser(): User? {
+    suspend fun getCurrentUser(): User? {
         val firebaseUser = auth.currentUser ?: return null
-        return userDao.findByEmail(firebaseUser.email ?: "")
+        return try {
+            val document = firestore.collection("users").document(firebaseUser.uid).get().await()
+            val user = document.toObject(User::class.java)
+            user?.let { userDao.insert(it) }
+            user
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Erro ao buscar usuário do Firestore", e)
+            null
+        }
     }
 
     suspend fun resetPassword(email: String): Boolean {
