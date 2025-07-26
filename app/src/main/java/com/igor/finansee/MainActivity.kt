@@ -22,6 +22,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import com.igor.finansee.data.AppDatabase
 import com.igor.finansee.data.repository.AuthRepository
 import com.igor.finansee.data.datastore.UserPreferencesRepository
@@ -86,8 +88,9 @@ class MainActivity : ComponentActivity() {
             val drawerState = rememberDrawerState(DrawerValue.Closed)
             val scope = rememberCoroutineScope()
             val userDao = AppDatabase.getDatabase(context).userDao()
+            val firestore = Firebase.firestore
             val authViewModel: AuthViewModel = viewModel(
-                factory = AuthViewModelFactory(AuthRepository(userDao))
+                factory = AuthViewModelFactory(AuthRepository(userDao, firestore))
             )
 
             FinanSeeTheme(selectedTheme = uiState.themeOption) {
@@ -156,7 +159,7 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 composable(Routes.PLANS) {
-                                    PlansScreen()
+                                    PlansScreen(authViewModel)
                                 }
 
                                 composable(Routes.DONUT_CHART) {

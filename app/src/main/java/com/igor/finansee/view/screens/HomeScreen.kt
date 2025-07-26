@@ -37,6 +37,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -95,98 +96,109 @@ fun HomeScreen(
 
     val context = LocalContext.current
 
-    val factory = remember(user) {
-        val db = AppDatabase.getDatabase(context)
-        HomeScreenViewModelFactory(
-            transactionDao = db.transactionDao(),
-            bankAccountDao = db.bankAccountDao(),
-            categoryDao = db.categoryDao(),
-            creditCardDao = db.creditCardDao(),
-            faturaDao = db.faturaCreditCardDao(),
-            planningDao = db.monthPlanningDao(),
-            user = user
-        )
-    }
-
-    val viewModel: HomeScreenViewModel = viewModel(factory = factory)
-
-    val uiState by viewModel.uiState.collectAsState()
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp)
-    ) {
-        item {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Olá, ${uiState.userName}!",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+    when (user) {
+        null -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                IconButton(onClick = { viewModel.selectPreviousMonth() }) {
-                    Icon(Icons.Filled.ChevronLeft, contentDescription = "Mês anterior")
-                }
-                Text(
-                    text = uiState.selectedDate.month.getDisplayName(TextStyle.FULL, Locale("pt", "BR")) + " " + uiState.selectedDate.year,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                IconButton(onClick = { viewModel.selectNextMonth() }) {
-                    Icon(Icons.Filled.ChevronRight, contentDescription = "Próximo mês")
-                }
+                CircularProgressIndicator()
             }
         }
-        item {
-            BalanceSection(
-                balance = "R$%.2f".format(uiState.totalAccountBalance),
-                showBalance = uiState.showBalance,
-                onToggleVisibility = { viewModel.toggleBalanceVisibility() }
-            )
-        }
-        item {
-            IncomeExpenseSection(
-                totalIncome = "R$%.2f".format(uiState.incomeForSelectedMonth),
-                totalExpenses = "R$%.2f".format(uiState.expensesForSelectedMonth)
-            )
-        }
-        item {
-            AccountsSection(uiState.userBankAccounts, navController)
-        }
-        item {
-            CreditCardSection(
-                userCreditCards = uiState.userCreditCards,
-                currentMonthFaturas = uiState.currentMonthFaturas,
-                totalCreditCardInvoiceAmount = uiState.totalCreditCardInvoiceAmount,
-                navController
-            )
-        }
-        item {
-            ExpensesByCategory(uiState.expensesByCategory)
-        }
-        item {
-            uiState.currentMonthPlanning?.let {
-                MonthPlan(
-                    selectedDate = uiState.selectedDate,
-                    currentUser = uiState.user ?: return@let,
-                    actualTotalExpenses = uiState.expensesForSelectedMonth,
-                    actualExpensesByCategory = uiState.expensesByCategory,
-                    allCategories = uiState.allCategories,
-                    planningList = listOf(it)
+        else -> {
+            val factory = remember(user) {
+                val db = AppDatabase.getDatabase(context)
+                HomeScreenViewModelFactory(
+                    transactionDao = db.transactionDao(),
+                    bankAccountDao = db.bankAccountDao(),
+                    categoryDao = db.categoryDao(),
+                    creditCardDao = db.creditCardDao(),
+                    faturaDao = db.faturaCreditCardDao(),
+                    planningDao = db.monthPlanningDao(),
+                    user = user
                 )
+            }
+
+            val viewModel: HomeScreenViewModel = viewModel(factory = factory)
+            val uiState by viewModel.uiState.collectAsState()
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp)
+            ) {
+                item {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Olá, ${uiState.userName}!",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        IconButton(onClick = { viewModel.selectPreviousMonth() }) {
+                            Icon(Icons.Filled.ChevronLeft, contentDescription = "Mês anterior")
+                        }
+                        Text(
+                            text = uiState.selectedDate.month.getDisplayName(TextStyle.FULL, Locale("pt", "BR")) + " " + uiState.selectedDate.year,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        IconButton(onClick = { viewModel.selectNextMonth() }) {
+                            Icon(Icons.Filled.ChevronRight, contentDescription = "Próximo mês")
+                        }
+                    }
+                }
+                item {
+                    BalanceSection(
+                        balance = "R$%.2f".format(uiState.totalAccountBalance),
+                        showBalance = uiState.showBalance,
+                        onToggleVisibility = { viewModel.toggleBalanceVisibility() }
+                    )
+                }
+                item {
+                    IncomeExpenseSection(
+                        totalIncome = "R$%.2f".format(uiState.incomeForSelectedMonth),
+                        totalExpenses = "R$%.2f".format(uiState.expensesForSelectedMonth)
+                    )
+                }
+                item {
+                    AccountsSection(uiState.userBankAccounts, navController)
+                }
+                item {
+                    CreditCardSection(
+                        userCreditCards = uiState.userCreditCards,
+                        currentMonthFaturas = uiState.currentMonthFaturas,
+                        totalCreditCardInvoiceAmount = uiState.totalCreditCardInvoiceAmount,
+                        navController
+                    )
+                }
+                item {
+                    ExpensesByCategory(uiState.expensesByCategory)
+                }
+                item {
+                    uiState.currentMonthPlanning?.let {
+                        MonthPlan(
+                            selectedDate = uiState.selectedDate,
+                            currentUser = uiState.user ?: return@let,
+                            actualTotalExpenses = uiState.expensesForSelectedMonth,
+                            actualExpensesByCategory = uiState.expensesByCategory,
+                            allCategories = uiState.allCategories,
+                            planningList = listOf(it)
+                        )
+                    }
+                }
             }
         }
     }

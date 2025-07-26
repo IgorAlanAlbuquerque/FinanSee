@@ -22,20 +22,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.igor.finansee.data.AppDatabase
-import com.igor.finansee.data.repository.AuthRepository
-import com.igor.finansee.data.models.User
+import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.PlansScreenViewModel
 import com.igor.finansee.viewmodels.PlansScreenViewModelFactory
 
 @Composable
-fun PlansScreen() {
+fun PlansScreen(authViewModel: AuthViewModel) {
+    val currentUser by authViewModel.currentUser.collectAsState()
     val context = LocalContext.current
-    val db = AppDatabase.getDatabase(context)
-    val authRepository = remember { AuthRepository(db.userDao()) }
-
-    val currentUser by produceState<User?>(initialValue = null, authRepository) {
-        value = authRepository.getCurrentLocalUser()
-    }
 
     if (currentUser == null) {
         Box(
@@ -46,11 +40,12 @@ fun PlansScreen() {
         }
     } else {
         val factory = remember(currentUser) {
+            val db = AppDatabase.getDatabase(context)
             PlansScreenViewModelFactory(
-                planningDao = db.monthPlanningDao(),
                 transactionDao = db.transactionDao(),
                 categoryDao = db.categoryDao(),
-                user = currentUser!!
+                planningDao = db.monthPlanningDao(),
+                user = currentUser
             )
         }
 

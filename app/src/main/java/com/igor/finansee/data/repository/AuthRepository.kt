@@ -7,33 +7,36 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
 import com.igor.finansee.R
 import com.igor.finansee.data.daos.UserDao
 import com.igor.finansee.data.models.User
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 
-class AuthRepository(private val userDao: UserDao) {
+class AuthRepository(
+    private val userDao: UserDao,
+    private val firestore: FirebaseFirestore
+) {
 
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
     suspend fun registerUser(email: String, password: String, name: String): User? {
         return try {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
-            val firebaseUser = result.user
+            val firebaseUser = result.user!!
 
-            if (firebaseUser != null) {
-                val newUser = User(
-                    name = name,
-                    email = email,
-                    registrationDate = LocalDate.now(),
-                    statusPremium = false
-                )
-                userDao.insert(newUser)
-                newUser
-            } else {
-                null
-            }
+            val newUser = User(
+                id = firebaseUser.uid,
+                name = name,
+                email = email,
+                registrationDate = LocalDate.now(),
+                statusPremium = false
+            )
+
+            firestore.collection("users").document(firebaseUser.uid).set(newUser).await()
+            userDao.insert(newUser)
+            newUser
         } catch (e: Exception) {
             Log.e("AuthRepository", "Erro no registro: $e")
             null
@@ -87,10 +90,6 @@ class AuthRepository(private val userDao: UserDao) {
         return userDao.findByEmail(firebaseUser.email ?: "")
     }
 
-    fun getFirebaseUserId(): String? {
-        return auth.currentUser?.uid
-    }
-
     suspend fun resetPassword(email: String): Boolean {
         return try {
             auth.sendPasswordResetEmail(email).await()
@@ -111,9 +110,5 @@ class AuthRepository(private val userDao: UserDao) {
 
     fun logout() {
         auth.signOut()
-    }
-
-    fun isUserLogged(): Boolean {
-        return auth.currentUser != null
     }
 }
