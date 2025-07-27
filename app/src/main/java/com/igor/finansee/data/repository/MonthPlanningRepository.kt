@@ -9,9 +9,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Date
 
 class MonthPlanningRepository(
     private val planningDao: MonthPlanningDao,
@@ -21,9 +24,18 @@ class MonthPlanningRepository(
     val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val collection = firestore.collection("users").document(userId).collection("plannings")
 
-    fun getPlanningFromRoom(startDate: LocalDate, endDate: LocalDate) =
-        planningDao.getPlanningForUserInPeriod(userId, startDate, endDate)
+    fun getPlanningFromRoom(startDate: LocalDate, endDate: LocalDate): Flow<MonthPlanning?> {
+        val start = Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+        val end = Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+        return planningDao.getPlanningForUserInPeriod(userId, start, end)
+    }
+    // NOVA FUNÇÃO ADICIONADA
+    suspend fun getPlanningForMonthOnce(month: LocalDate): MonthPlanning? {
+        val startDate = Date.from(month.atStartOfDay(ZoneId.systemDefault()).toInstant())
+        val endDate = Date.from(month.plusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant())
 
+        return planningDao.getPlanningForMonth(userId, startDate, endDate)
+    }
     fun startListeningForRemoteChanges() {
         collection.addSnapshotListener { snapshots, error ->
             if (error != null) {
@@ -44,18 +56,10 @@ class MonthPlanningRepository(
 
     suspend fun upsertPlanning(planning: MonthPlanning) {
         try {
-            val planningToSave = if (planning.id.isBlank()) {
-                val firestoreId = collection.document().id
-                planning.copy(id = firestoreId)
-            } else {
-                planning
-            }
-
-            planningDao.upsertPlanning(planningToSave)
-            collection.document(planningToSave.id).set(planningToSave).await()
-
+            planningDao.upsertPlanning(planning)
+            collection.document(planning.id).set(planning).await()
         } catch (e: Exception) {
-            Log.e("Firestore", "Error upserting bank account", e)
+            Log.e("Firestore", "Error upserting planning", e)
         }
     }
 

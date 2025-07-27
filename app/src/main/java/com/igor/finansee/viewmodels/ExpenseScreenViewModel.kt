@@ -41,18 +41,16 @@ class ExpenseScreenViewModel(
             _selectedMonth.collectLatest { month ->
                 _uiState.update { it.copy(isLoading = true) }
 
-                // Converte os LocalDate para Date
                 val startDate = Date.from(month.atStartOfDay(ZoneId.systemDefault()).toInstant())
                 val endDate = Date.from(month.plusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant())
 
-                // Passa os objetos Date para o repositório
                 val expensesFlow = expenseRepository.getExpensesFromRoom(user.id, startDate, endDate)
 
                 expensesFlow.collect { expenses ->
                     _uiState.update {
                         it.copy(
                             expenses = expenses,
-                            selectedMonth = month, // A UI ainda pode usar o LocalDate
+                            selectedMonth = month,
                             isLoading = false
                         )
                     }
@@ -83,12 +81,12 @@ class ExpenseScreenViewModel(
         }
     }
 
-
-    fun deleteExpense(expense: String) {
+    fun deleteExpenseById(expenseId: String) {
         viewModelScope.launch {
-            expenseRepository.deleteExpenseById(expense)
+            expenseRepository.deleteExpenseById(expenseId)
         }
     }
+
     fun selectPreviousMonth() {
         _selectedMonth.value = _selectedMonth.value.minusMonths(1)
     }
@@ -111,5 +109,4 @@ class ExpenseScreenViewModel(
             expenseRepository.upsertExpense(novaDespesa)
         }
     }
-
 }

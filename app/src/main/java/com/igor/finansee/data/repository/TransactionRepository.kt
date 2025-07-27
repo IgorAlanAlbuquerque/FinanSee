@@ -4,15 +4,18 @@ import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObjects
 import com.igor.finansee.data.daos.TransactionDao
+import com.igor.finansee.data.models.CategorySpending
 import com.igor.finansee.data.models.Transaction
 import com.igor.finansee.data.models.TransactionType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
+import java.util.Date
 
 class TransactionRepository(
     private val transactionDao: TransactionDao,
@@ -67,9 +70,10 @@ class TransactionRepository(
         repositoryScope.cancel()
     }
 
-    fun getSumByTypesForPeriod(types: List<TransactionType>, startDate: LocalDate, endDate: LocalDate) =
+    fun getSumByTypesForPeriod(types: List<TransactionType>, startDate: Date?, endDate: Date?) =
         transactionDao.getSumByTypesForPeriod(userId, types, startDate, endDate)
 
-    fun getExpensesGroupedByCategory(expenseTypes: List<TransactionType>, startDate: LocalDate, endDate: LocalDate) =
-        transactionDao.getExpensesGroupedByCategory(userId, startDate, endDate, expenseTypes)
+    fun getExpensesGroupedByCategory(types: List<TransactionType>, startDate: Date, endDate: Date): Flow<List<CategorySpending>> {
+        return transactionDao.getExpensesGroupedByCategory(userId, startDate, endDate, types)
+    }
 }

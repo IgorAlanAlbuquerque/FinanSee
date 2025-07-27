@@ -7,6 +7,10 @@ import androidx.room.PrimaryKey
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
+data class PlannedCategorySpending(
+    val categoryId: String = "",
+    val plannedAmount: Double = 0.0
+)
 
 @Entity(
     tableName = "month_planning",
