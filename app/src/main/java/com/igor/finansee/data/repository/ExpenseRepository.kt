@@ -11,7 +11,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.time.LocalDate
+import java.util.Date
 
 class ExpenseRepository(
     private val expenseDao: ExpenseDao,
@@ -21,7 +21,7 @@ class ExpenseRepository(
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val collection = firestore.collection("users").document(userId).collection("expenses")
 
-    fun getExpensesFromRoom(userId: String, startDate: LocalDate, endDate: LocalDate) =
+    fun getExpensesFromRoom(userId: String, startDate: Date, endDate: Date) =
         expenseDao.getExpensesForPeriod(userId, startDate, endDate)
 
     fun startListeningForRemoteChanges() {

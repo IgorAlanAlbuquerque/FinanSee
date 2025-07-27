@@ -77,8 +77,10 @@ import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.HomeScreenViewModel
 import com.igor.finansee.viewmodels.HomeScreenViewModelFactory
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
+import java.time.temporal.TemporalAccessor
 import java.util.Locale
 
 data class CategoryWithAmount(
@@ -604,8 +606,8 @@ fun CreditCardSection(
                             Spacer(modifier = Modifier.height(8.dp))
 
                             val closingDateFatura = LocalDate.of(
-                                currentFaturaForThisCard.month.year,
-                                currentFaturaForThisCard.month.month,
+                                currentFaturaForThisCard.month?.year ?: 2025,
+                                currentFaturaForThisCard.month?.month ?: 3,
                                 creditCard.statementClosingDay
                             )
                             Text(
@@ -852,8 +854,7 @@ fun MonthPlan(
     val currentPlanning = remember(planningList, selectedDate, currentUser.id) {
         planningList.find {
             it.userId == currentUser.id &&
-                    it.monthYear.year == selectedDate.year &&
-                    it.monthYear.month == selectedDate.month
+                    it.monthYear?.let { date -> YearMonth.from(date as TemporalAccessor?) } == YearMonth.from(selectedDate)
         }
     }
 

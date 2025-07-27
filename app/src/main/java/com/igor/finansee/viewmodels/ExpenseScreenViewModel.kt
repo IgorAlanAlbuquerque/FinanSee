@@ -11,6 +11,8 @@ import com.igor.finansee.data.states.ExpenseScreenUiState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Date
 
 class ExpenseScreenViewModel(
     private val expenseRepository: ExpenseRepository,
@@ -39,15 +41,18 @@ class ExpenseScreenViewModel(
             _selectedMonth.collectLatest { month ->
                 _uiState.update { it.copy(isLoading = true) }
 
-                val start = month
-                val end = month.plusMonths(1)
-                val expensesFlow = expenseRepository.getExpensesFromRoom(user.id,start, end)
+                // Converte os LocalDate para Date
+                val startDate = Date.from(month.atStartOfDay(ZoneId.systemDefault()).toInstant())
+                val endDate = Date.from(month.plusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant())
+
+                // Passa os objetos Date para o repositório
+                val expensesFlow = expenseRepository.getExpensesFromRoom(user.id, startDate, endDate)
 
                 expensesFlow.collect { expenses ->
                     _uiState.update {
                         it.copy(
                             expenses = expenses,
-                            selectedMonth = month,
+                            selectedMonth = month, // A UI ainda pode usar o LocalDate
                             isLoading = false
                         )
                     }
@@ -61,7 +66,7 @@ class ExpenseScreenViewModel(
         descricao: String,
         valor: Double,
         categoryId: String?,
-        data: LocalDate
+        data: Date
     ) {
         viewModelScope.launch {
             val userId = user.id
@@ -92,7 +97,7 @@ class ExpenseScreenViewModel(
         _selectedMonth.value = _selectedMonth.value.plusMonths(1)
     }
 
-    fun addExpense(descricao: String, valor: Double, categoryId: String?, data: LocalDate) {
+    fun addExpense(descricao: String, valor: Double, categoryId: String?, data: Date) {
         viewModelScope.launch {
             val userId = user.id
 

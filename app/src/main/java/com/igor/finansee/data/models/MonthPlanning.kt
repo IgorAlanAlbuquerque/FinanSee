@@ -5,7 +5,6 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.google.firebase.firestore.ServerTimestamp
-import java.time.LocalDate
 import java.util.Date
 
 
@@ -25,7 +24,7 @@ data class MonthPlanning(
     @PrimaryKey
     val id: String = "",
     val userId: String = "",
-    val monthYear: LocalDate = LocalDate.now(),
+    val monthYear: Date? = null,
     val totalMonthlyIncome: Double = 0.0,
     val targetSpendingPercentage: Double = 0.0,
     val categorySpendingPlan: List<PlannedCategorySpending> = emptyList(),

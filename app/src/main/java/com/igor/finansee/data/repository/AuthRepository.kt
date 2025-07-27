@@ -62,9 +62,9 @@ class AuthRepository(
             val userDocRef = firestore.collection("users").document(firebaseUser.uid)
             val document = userDocRef.get().await()
 
+            val finalUser: User?
             if (document.exists()) {
-                val user = document.toObject(User::class.java)
-                user
+                finalUser = document.toObject(User::class.java)
             } else {
                 val newUser = User(
                     id = firebaseUser.uid,
@@ -74,8 +74,11 @@ class AuthRepository(
                     registrationTimestamp = Date()
                 )
                 userDocRef.set(newUser).await()
-                newUser
+                finalUser = newUser
             }
+
+            finalUser?.let { userDao.insert(it) }
+            finalUser
         } catch (e: Exception) {
             Log.e("AuthRepository", "Erro no login com Google: ${e.message}")
             null
@@ -87,6 +90,8 @@ class AuthRepository(
         return try {
             val document = firestore.collection("users").document(firebaseUser.uid).get().await()
             val user = document.toObject(User::class.java)
+
+            user?.let { userDao.insert(it) }
             user
         } catch (e: Exception) {
             Log.e("AuthRepository", "Erro ao buscar usuário do Firestore", e)

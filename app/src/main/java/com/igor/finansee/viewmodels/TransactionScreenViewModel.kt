@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TransactionScreenViewModel(
@@ -67,7 +68,12 @@ class TransactionScreenViewModel(
             selectedMonth = month,
             currentOverallBalance = overallBalance ?: 0.0,
             monthlyBalance = monthlyData.totalIncome - monthlyData.totalExpenses,
-            transactionsByDate = monthlyData.transactions.groupBy { it.transaction.date }
+            transactionsByDate = monthlyData.transactions
+                .filter { it.transaction.date != null } // 1. Garante que a data não é nula
+                .groupBy {
+                    // 2. Converte a 'Date' (agora não-nula) para 'LocalDate'
+                    it.transaction.date!!.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                }
         )
     }.stateIn(
         scope = viewModelScope,

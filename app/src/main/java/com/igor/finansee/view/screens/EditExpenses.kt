@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.igor.finansee.data.AppDatabase
 import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.ExpenseScreenViewModelFactory
-import java.time.LocalDate
+import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -164,20 +164,21 @@ fun EditExpenseScreen(authViewModel: AuthViewModel) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Button(onClick = {
-                    val dataLocalDate = try {
-                        LocalDate.parse(data)
+                    val dataDate = try {
+                        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        formatter.parse(data)
                     } catch (e: Exception) {
                         Log.e("errp", "ovo", e)
                         null
                     }
 
-                    if (dataLocalDate != null && categoriaSelecionada != null) {
+                    if (dataDate != null && categoriaSelecionada != null) {
                         viewModel.updateExpense(
                             editingExpenseId,
                             descricao,
                             valor.toDoubleOrNull() ?: 0.0,
                             categoriaSelecionada?.id,
-                            dataLocalDate
+                            dataDate
                         )
                         editingExpenseId = ""
                     }

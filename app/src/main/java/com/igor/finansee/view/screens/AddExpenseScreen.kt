@@ -16,6 +16,7 @@ import com.igor.finansee.data.models.Category
 import com.igor.finansee.viewmodels.AuthViewModel
 import com.igor.finansee.viewmodels.ExpenseScreenViewModelFactory
 import java.time.LocalDate
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +37,7 @@ fun AddExpenseScreen(navController: NavHostController, authViewModel: AuthViewMo
     var valor by remember { mutableStateOf("") }
     var categoriaSelecionada by remember { mutableStateOf<Category?>(null) }
     var expanded by remember { mutableStateOf(false) }
-    val dataAtual = LocalDate.now()
+    val dataAtual = Date()
 
     Column(
         modifier = Modifier

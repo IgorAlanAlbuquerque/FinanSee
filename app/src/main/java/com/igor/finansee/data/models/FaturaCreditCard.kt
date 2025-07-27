@@ -1,6 +1,5 @@
 package com.igor.finansee.data.models
 
-import java.time.LocalDate
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -24,7 +23,7 @@ data class FaturaCreditCard(
     @PrimaryKey
     val id: String = "",
     val creditCardId: String = "",
-    val month: LocalDate = LocalDate.now(),
+    val month: Date? = null,
     val valor: Double = 0.0,
     @ServerTimestamp
     val lastUpdated: Date? = null
