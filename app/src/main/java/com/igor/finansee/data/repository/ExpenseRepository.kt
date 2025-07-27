@@ -4,11 +4,13 @@ import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObjects
 import com.igor.finansee.data.daos.ExpenseDao
+import com.igor.finansee.data.models.CategorySpending
 import com.igor.finansee.data.models.Expense
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.Date
@@ -16,7 +18,7 @@ import java.util.Date
 class ExpenseRepository(
     private val expenseDao: ExpenseDao,
     firestore: FirebaseFirestore,
-    userId: String
+    private val userId: String
 ) {
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val collection = firestore.collection("users").document(userId).collection("expenses")
@@ -24,6 +26,12 @@ class ExpenseRepository(
     fun getExpensesFromRoom(userId: String, startDate: Date, endDate: Date) =
         expenseDao.getExpensesForPeriod(userId, startDate, endDate)
 
+    // FUNÇÃO ADICIONADA
+    fun getExpenseGroupedByCategory(startDate: Date, endDate: Date): Flow<List<CategorySpending>> {
+        return expenseDao.getExpenseGroupedByCategory(userId, startDate, endDate)
+    }
+
+    // FUNÇÃO ADICIONADA (FALTAVA)
     fun startListeningForRemoteChanges() {
         collection.addSnapshotListener { snapshots, error ->
             if (error != null) {
@@ -47,10 +55,8 @@ class ExpenseRepository(
             } else {
                 expense
             }
-
             expenseDao.upsertExpense(expenseToSave)
             collection.document(expenseToSave.id).set(expenseToSave).await()
-
         } catch (e: Exception) {
             Log.e("Firestore", "Error upserting expense", e)
         }

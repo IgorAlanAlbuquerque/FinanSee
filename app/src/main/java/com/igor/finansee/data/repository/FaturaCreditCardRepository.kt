@@ -11,7 +11,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.time.LocalDate
+import java.util.Date
 
 class FaturaCreditCardRepository(
     private val faturaDao: FaturaCreditCardDao,
@@ -21,7 +21,7 @@ class FaturaCreditCardRepository(
     val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val collection = firestore.collection("users").document(userId).collection("faturas")
 
-    fun getFaturasFromRoom(startDate: LocalDate, endDate: LocalDate) =
+    fun getFaturasFromRoom(startDate: Date?, endDate: Date?) =
         faturaDao.getFaturasForUserInPeriod(userId, startDate, endDate)
 
     fun startListeningForRemoteChanges() {

@@ -5,13 +5,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObjects
 import com.igor.finansee.data.daos.CategoryDao
 import com.igor.finansee.data.models.Category
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class CategoryRepository(
     private val categoryDao: CategoryDao,
@@ -23,6 +24,11 @@ class CategoryRepository(
 
     fun getCategoriesFromRoom(): Flow<List<Category>> {
         return categoryDao.getAllCategories()
+    }
+
+    // NOVA FUNÇÃO ADICIONADA
+    suspend fun getAllCategoriesOnce(): List<Category> {
+        return categoryDao.getAllCategories().first()
     }
 
     fun startListeningForRemoteChanges() {

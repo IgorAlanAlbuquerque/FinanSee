@@ -21,12 +21,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Date
 
 private data class MonthlyData(
     val income: Double,
     val totalExpenses: Double,
     val faturas: List<FaturaCreditCard>,
-    val expensesByCategory: List<CategoryExpenseResult>,
+    val expensesByCategory: List<CategorySpending>,
     val planning: MonthPlanning?
 )
 
@@ -121,21 +123,27 @@ class HomeScreenViewModel(
     )
 
     private fun createMonthlyDataFlow(month: LocalDate): Flow<MonthlyData> {
-        val startDate = month
-        val endDate = month.plusMonths(1)
+        val startLocalDate = month
+        val endLocalDate = month.plusMonths(1)
+
+        val startDateAsDate = Date.from(startLocalDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+        val endDateAsDate = Date.from(endLocalDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+
         return combine(
-            transactionRepository.getSumByTypesForPeriod(listOf(TransactionType.INCOME), startDate, endDate),
-            transactionRepository.getSumByTypesForPeriod(expenseTypes, startDate, endDate),
-            faturaRepository.getFaturasFromRoom(startDate, endDate),
-            transactionRepository.getExpensesGroupedByCategory(expenseTypes, startDate, endDate),
-            planningRepository.getPlanningFromRoom(startDate, endDate)
+            transactionRepository.getSumByTypesForPeriod(listOf(TransactionType.INCOME), startDateAsDate, endDateAsDate),
+            transactionRepository.getSumByTypesForPeriod(expenseTypes, startDateAsDate, endDateAsDate),
+
+            faturaRepository.getFaturasFromRoom(startDateAsDate, endDateAsDate),
+
+            transactionRepository.getExpensesGroupedByCategory(expenseTypes, startDateAsDate, endDateAsDate),
+
+            planningRepository.getPlanningFromRoom(startLocalDate, endLocalDate)
         ) { income, directExpenses, faturas, expensesByCategory, planning ->
             val totalExpenses = (directExpenses ?: 0.0) + faturas.sumOf { it.valor }
             MonthlyData(income ?: 0.0, totalExpenses, faturas, expensesByCategory, planning)
         }
     }
-
-    private fun mapCategoryExpenses(results: List<CategoryExpenseResult>, categories: List<Category>): List<CategoryWithAmount> {
+    private fun mapCategoryExpenses(results: List<CategorySpending>, categories: List<Category>): List<CategoryWithAmount> {
         return results.map { result ->
             val category = categories.find { it.id == result.categoryId } ?: Category(result.categoryId, "Desconhecida")
             CategoryWithAmount(category, result.totalAmount)

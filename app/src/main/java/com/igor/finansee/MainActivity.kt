@@ -8,10 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -25,34 +21,25 @@ import androidx.navigation.navArgument
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.igor.finansee.data.AppDatabase
-import com.igor.finansee.data.repository.AuthRepository
 import com.igor.finansee.data.datastore.UserPreferencesRepository
-import com.igor.finansee.viewmodels.AuthViewModel
-import com.igor.finansee.viewmodels.SettingsViewModel
-import com.igor.finansee.viewmodels.SettingsViewModelFactory
-import com.igor.finansee.viewmodels.AuthViewModelFactory
-import kotlinx.coroutines.launch
+import com.igor.finansee.data.repository.AuthRepository
 import com.igor.finansee.navigation.NavAuth
-import com.igor.finansee.view.screens.AddExpenseScreen
 import com.igor.finansee.view.components.BottomNavigationBar
 import com.igor.finansee.view.components.CircularActionMenu
 import com.igor.finansee.view.components.DrawerContent
 import com.igor.finansee.view.components.TopBar
-import com.igor.finansee.view.screens.AddAccountScreen
-import com.igor.finansee.view.screens.DailyReminderScreen
-import com.igor.finansee.view.screens.DonutChartScreen
-import com.igor.finansee.view.screens.EditExpenseScreen
-import com.igor.finansee.view.screens.EmailSettingsScreen
-import com.igor.finansee.view.screens.HomeScreen
-import com.igor.finansee.view.screens.NotificationSettingsScreen
-import com.igor.finansee.view.screens.PlansScreen
-import com.igor.finansee.view.screens.ProfileScreen
-import com.igor.finansee.view.screens.SettingsScreen
-import com.igor.finansee.view.screens.SplashScreen
-import com.igor.finansee.view.screens.TransactionScreen
+import com.igor.finansee.view.screens.*
 import com.igor.finansee.view.theme.FinanSeeTheme
+import com.igor.finansee.viewmodels.AuthViewModel
+import com.igor.finansee.viewmodels.AuthViewModelFactory
+import com.igor.finansee.viewmodels.CreatePlanViewModel
+import com.igor.finansee.viewmodels.SettingsViewModel
+import com.igor.finansee.viewmodels.SettingsViewModelFactory
+import kotlinx.coroutines.launch
 
 object Routes {
+
+    const val SENSOR = "sensor_adapt"
     const val SPLASH = "splash_screen"
     const val AUTO_CHOICE = "auto_choice"
     const val LOGIN = "login"
@@ -69,8 +56,8 @@ object Routes {
     const val EMAIL_SETTINGS = "email_settings"
     const val DAILY_REMINDER = "daily_reminder"
     const val FORGOT_PASSWORD = "forgot_password"
-
-
+    // Rota adicionada para a tela de criação/edição de plano
+    const val CREATE_PLAN = "createPlan/{month}"
 }
 
 class MainActivity : ComponentActivity() {
@@ -159,7 +146,28 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 composable(Routes.PLANS) {
-                                    PlansScreen(authViewModel)
+                                    // Ordem dos parâmetros corrigida
+                                    PlansScreen(
+                                        authViewModel = authViewModel,
+                                        navController = navController
+                                    )
+                                }
+
+                                // Rota adicionada para a CreatePlanScreen
+                                composable(
+                                    route = Routes.CREATE_PLAN,
+                                    arguments = listOf(navArgument("month") { type = NavType.StringType })
+                                ) { backStackEntry ->
+                                    val month = backStackEntry.arguments?.getString("month")
+                                    if (month != null) {
+                                        CreatePlanScreen(
+                                            authViewModel = authViewModel,
+                                            selectedMonth = month,
+                                            onNavigateBack = {
+                                                navController.popBackStack()
+                                            }
+                                        )
+                                    }
                                 }
 
                                 composable(Routes.DONUT_CHART) {
@@ -234,6 +242,9 @@ class MainActivity : ComponentActivity() {
                                         onNavigateBack = { navController.popBackStack() },
                                         viewModel = settingsViewModel
                                     )
+                                }
+                                composable (Routes.SENSOR){
+                                    SensorAdaptScreen()
                                 }
 
                                 composable(Routes.DAILY_REMINDER) {

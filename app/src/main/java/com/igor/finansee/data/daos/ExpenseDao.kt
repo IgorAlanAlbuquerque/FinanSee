@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
+import com.igor.finansee.data.models.CategorySpending
 import com.igor.finansee.data.models.Expense
 import com.igor.finansee.data.models.ExpenseWithCategory
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +17,15 @@ interface ExpenseDao {
     @Transaction
     @Query("SELECT * FROM expense WHERE userId = :userId AND data >= :startDate AND data < :endDate ORDER BY data DESC")
     fun getExpensesForPeriod(userId: String, startDate: Date, endDate: Date): Flow<List<ExpenseWithCategory>>
+    @Query("""
+    SELECT categoryId, SUM(valor) as totalAmount 
+    FROM expense 
+    WHERE userId = :userId AND data >= :startDate AND data < :endDate AND categoryId IS NOT NULL
+    GROUP BY categoryId
+""")
+    fun getExpenseGroupedByCategory(userId: String, startDate: Date, endDate: Date): Flow<List<CategorySpending>>
+
+
 
     @Upsert
     suspend fun upsertExpense(expense: Expense)
