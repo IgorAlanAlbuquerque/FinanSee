@@ -1,6 +1,6 @@
 package com.igor.finansee.data.models
 
-data class PlannedCategorySpending(
+data class CategorySpending(
     val categoryId: String,
-    val plannedAmount: Double
+    val totalAmount: Double
 )

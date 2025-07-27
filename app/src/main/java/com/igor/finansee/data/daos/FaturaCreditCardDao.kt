@@ -6,7 +6,7 @@ import androidx.room.Query
 import androidx.room.Upsert
 import com.igor.finansee.data.models.FaturaCreditCard
 import kotlinx.coroutines.flow.Flow
-import java.time.LocalDate
+import java.util.Date
 
 @Dao
 interface FaturaCreditCardDao {
@@ -15,7 +15,7 @@ interface FaturaCreditCardDao {
         WHERE month >= :startDate AND month < :endDate
         AND creditCardId IN (SELECT id FROM credit_card WHERE userId = :userId)
     """)
-    fun getFaturasForUserInPeriod(userId: String, startDate: LocalDate, endDate: LocalDate): Flow<List<FaturaCreditCard>>
+    fun getFaturasForUserInPeriod(userId: String, startDate: Date?, endDate: Date?): Flow<List<FaturaCreditCard>>
 
     @Upsert
     suspend fun upsertFatura(fatura: FaturaCreditCard)
